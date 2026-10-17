@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ai Là Triệu Phú - Hóa Học 10 (Interactive Gameshow Canvas)</title>
+<style>
+  :root {
+    --bg-dark: #050814;
+    --studio-blue: #0b1536;
+    --gold: #f59e0b;
+    --gold-glow: rgba(245, 158, 11, 0.45);
+    --gold-bright: #fbbf24;
+    --cyan-border: #38bdf8;
+    --cyan-glow: rgba(56, 189, 248, 0.35);
+    --text-white: #ffffff;
+    --text-gray: #94a3b8;
+    --green-correct: #10b981;
+    --red-wrong: #ef4444;
+    --card-bg: linear-gradient(180deg, #111e48 0%, #070c20 100%);
+    --card-selected: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    --card-correct: linear-gradient(180deg, #059669 0%, #047857 100%);
+    --card-wrong: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 20%, #1e2a63 0%, #070b1a 65%, #02040a 100%);
+    color: var(--text-white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Animated Studio Spotlight */
+  .studio-spotlight {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1000px;
+    height: 520px;
+    background: radial-gradient(ellipse at top, rgba(56, 189, 248, 0.2) 0%, rgba(245, 158, 11, 0.05) 50%, transparent 75%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(7, 11, 26, 0.95);
+    border-bottom: 2px solid #1e3a8a;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #1e3a8a 65%, #0f172a 100%);
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 16px var(--gold-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 22px;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  }
+
+  .title-text h1 {
+    font-size: 1.25rem;
+    color: var(--gold-bright);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    text-shadow: 0 0 10px var(--gold-glow);
+  }
+
+  .player-tag {
+    font-size: 0.88rem;
+    color: #38bdf8;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-btn {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #e2e8f0;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-btn:hover {
+    background: #334155;
+    border-color: var(--cyan-border);
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
+
+  .nav-btn.gold {
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    border-color: var(--gold);
+    color: white;
+  }
+
+  .nav-btn.gold:hover {
+    box-shadow: 0 0 16px var(--gold-glow);
+    transform: translateY(-1px);
+  }
+
+  .quit-btn {
+    background: #7f1d1d;
+    border-color: #ef4444;
+  }
+
+  .quit-btn:hover {
+    background: #dc2626;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Main Container */
+  .main-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    padding: 20px 24px;
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Left Area: Question Box and 4 Answers (Moved UP and prominent!) */
+  
+  /* 45-Second Countdown Timer */
+  .timer-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: -6px;
+  }
+
+  .timer-clock {
+    background: #0f172a;
+    border: 2px solid var(--cyan-border);
+    border-radius: 20px;
+    padding: 6px 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 15px var(--cyan-glow);
+    min-width: 110px;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .timer-icon {
+    font-size: 1.25rem;
+  }
+
+  .timer-digits {
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: var(--cyan-border);
+    font-family: monospace;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+  }
+
+  .timer-sec-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+
+  .timer-clock.warning {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+
+  .timer-clock.warning .timer-digits {
+    color: var(--gold-bright);
+  }
+
+  .timer-clock.danger {
+    border-color: var(--red-wrong);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+    animation: timerPulse 0.5s infinite alternate;
+  }
+
+  .timer-clock.danger .timer-digits {
+    color: #f87171;
+  }
+
+  .timer-track {
+    flex: 1;
+    height: 10px;
+    background: #1e293b;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  .timer-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #38bdf8 0%, #2563eb 100%);
+    border-radius: 5px;
+    transition: width 1s linear, background 0.3s ease;
+  }
+
+  .timer-fill.warning {
+    background: linear-gradient(90deg, #fbbf24 0%, #d97706 100%);
+  }
+
+  .timer-fill.danger {
+    background: linear-gradient(90deg, #f87171 0%, #dc2626 100%);
+  }
+
+  @keyframes timerPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+  }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 24px;
+    padding-top: 10px;
+  }
+
+  /* Question Box (Larger, higher up, highly visible) */
+  .hex-box {
+    position: relative;
+    width: 100%;
+    background: var(--card-bg);
+    border: 2px solid var(--cyan-border);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: 0 0 25px var(--cyan-glow), inset 0 0 18px rgba(56, 189, 248, 0.16);
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .question-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #1e3a8a 0%, #0b1329 100%);
+    border: 2px solid var(--gold);
+    color: var(--gold-bright);
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 4px 26px;
+    border-radius: 14px;
+    letter-spacing: 1px;
+    box-shadow: 0 0 14px var(--gold-glow);
+    white-space: nowrap;
+  }
+
+  .question-text {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  }
+
+  /* 4 Answer Cards (Prominent, spacious, high contrast) */
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    width: 100%;
+  }
+
+  .answer-card {
+    background: var(--card-bg);
+    border: 2px solid #334155;
+    border-radius: 14px;
+    padding: 18px 24px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .answer-card:hover:not(.locked):not(.disabled) {
+    border-color: var(--cyan-border);
+    box-shadow: 0 0 18px var(--cyan-glow);
+    transform: translateY(-2px);
+  }
+
+  .answer-card.selected {
+    background: var(--card-selected);
+    border-color: var(--gold);
+    box-shadow: 0 0 25px var(--gold-glow);
+    animation: pulseSelected 1s infinite alternate;
+  }
+
+  .answer-card.correct {
+    background: var(--card-correct) !important;
+    border-color: #34d399 !important;
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.6) !important;
+    animation: flashCorrect 0.6s 3;
+  }
+
+  .answer-card.wrong {
+    background: var(--card-wrong) !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 28px rgba(239, 68, 68, 0.6) !important;
+  }
+
+  .answer-card.disabled {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .answer-letter {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--gold);
+    min-width: 32px;
+    text-shadow: 0 0 8px var(--gold-glow);
+  }
+
+  .answer-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #f8fafc;
+    line-height: 1.35;
+  }
+
+  /* Right Sidebar: 4 Lifelines at the top + Money Ladder below */
+  .sidebar-ladder {
+    background: rgba(11, 21, 54, 0.92);
+    border: 2px solid #1e3a8a;
+    border-radius: 18px;
+    padding: 16px 14px;
+    box-shadow: 0 0 24px rgba(15, 23, 42, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  /* 4 Lifelines Bar in Sidebar */
+  .sidebar-lifelines {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 10px 8px;
+  }
+
+  .lifeline-btn {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #1e3a8a 0%, #0b1329 100%);
+    border: 2px solid var(--cyan-border);
+    box-shadow: 0 0 10px var(--cyan-glow);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .lifeline-btn:hover:not(.used) {
+    transform: scale(1.08);
+    border-color: var(--gold);
+    box-shadow: 0 0 16px var(--gold-glow);
+  }
+
+  .lifeline-btn.used {
+    filter: grayscale(1) opacity(0.35);
+    cursor: not-allowed !important;
+    border-color: #475569;
+    box-shadow: none;
+  }
+
+  .lifeline-btn.used::after {
+    content: "✕";
+    position: absolute;
+    font-size: 38px;
+    color: #ef4444;
+    font-weight: 900;
+  }
+
+  .lifeline-icon {
+    font-size: 20px;
+  }
+
+  .lifeline-label {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Ladder Header & List */
+  .ladder-header {
+    text-align: center;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 6px;
+  }
+
+  .ladder-header h2 {
+    font-size: 1.05rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ladder-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ladder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #94a3b8;
+    transition: all 0.2s;
+  }
+
+  .ladder-item.milestone {
+    color: #ffffff;
+    font-weight: 900;
+  }
+
+  .ladder-item.milestone .reward-val {
+    color: var(--gold);
+  }
+
+  .ladder-item.active {
+    background: linear-gradient(90deg, #d97706 0%, #b45309 100%);
+    color: #ffffff !important;
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 16px var(--gold-glow);
+    transform: scale(1.02);
+  }
+
+  .ladder-item.passed {
+    color: #10b981;
+  }
+
+  /* Explanation / Next Question Box */
+  .explanation-modal {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    border: 2px solid var(--green-correct);
+    border-radius: 14px;
+    padding: 16px 26px;
+    width: 90%;
+    max-width: 820px;
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.45);
+    z-index: 50;
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+
+  .exp-content h3 {
+    color: var(--green-correct);
+    font-size: 1.15rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .exp-content p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  .next-btn {
+    margin-top: 12px;
+    background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    border: none;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(5, 150, 105, 0.4);
+    transition: transform 0.2s;
+  }
+
+  .next-btn:hover {
+    transform: scale(1.04);
+  }
+
+  /* Modals Overlay (Common) */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .modal-card {
+    background: #0f172a;
+    border: 2px solid var(--gold);
+    border-radius: 18px;
+    padding: 28px;
+    max-width: 720px;
+    width: 92%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 45px var(--gold-glow);
+    text-align: center;
+    animation: zoomIn 0.3s ease;
+  }
+
+  .modal-card h2 {
+    color: var(--gold);
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+
+  .modal-close-btn {
+    background: #334155;
+    border: none;
+    color: white;
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+
+  .modal-close-btn:hover {
+    background: #475569;
+  }
+
+  /* Import Questions Form */
+  .import-textarea {
+    width: 100%;
+    height: 220px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #f8fafc;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    resize: vertical;
+    margin: 12px 0;
+    outline: none;
+  }
+
+  .import-textarea:focus {
+    border-color: var(--cyan-border);
+  }
+
+  .import-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-action {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s;
+  }
+
+  .btn-action.primary {
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+  }
+
+  .btn-action.secondary {
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .btn-action.preset {
+    background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    color: white;
+  }
+
+  .btn-action.danger {
+    background: #dc2626;
+    color: white;
+  }
+
+  .btn-action:hover {
+    transform: scale(1.04);
+  }
+
+  /* Leaderboard Table */
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95rem;
+    text-align: left;
+  }
+
+  .leaderboard-table th {
+    background: #1e3a8a;
+    color: var(--gold);
+    padding: 10px 12px;
+    font-weight: 800;
+  }
+
+  .leaderboard-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #1e293b;
+    color: #f1f5f9;
+  }
+
+  .leaderboard-table tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.4);
+  }
+
+  .leaderboard-empty {
+    color: #94a3b8;
+    padding: 20px;
+    font-style: italic;
+    text-align: center;
+  }
+
+  .input-player-name {
+    width: 85%;
+    max-width: 420px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 2px solid var(--cyan-border);
+    background: #1e293b;
+    color: white;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 14px 0;
+    outline: none;
+  }
+
+  .input-player-name:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 18px var(--gold-glow);
+  }
+
+  /* Famous Scientist Phone Call */
+  .call-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    margin: 0 auto 10px;
+    background: radial-gradient(circle, #38bdf8 0%, #1e3a8a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+
+  .advisor-message {
+    background: #1e293b;
+    padding: 16px 20px;
+    border-radius: 10px;
+    font-style: italic;
+    color: #f1f5f9;
+    font-size: 1.05rem;
+    margin: 14px 0;
+    border-left: 4px solid var(--gold);
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  .endgame-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 23, 0.94);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+
+  .endgame-box {
+    background: #0f172a;
+    border: 3px solid var(--gold);
+    border-radius: 20px;
+    padding: 34px;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 50px var(--gold-glow);
+  }
+
+  .endgame-box h1 {
+    font-size: 1.85rem;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .prize-announcement {
+    font-size: 2.1rem;
+    font-weight: 900;
+    color: #34d399;
+    margin: 14px 0;
+    text-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
+  }
+
+  .endgame-details {
+    color: #cbd5e1;
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* Preset Selection Cards in Setup Modal */
+  .preset-card-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0;
+    text-align: left;
+  }
+
+  .preset-card {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .preset-card:hover {
+    border-color: var(--cyan-border);
+    box-shadow: 0 0 12px var(--cyan-glow);
+  }
+
+  .preset-card.active {
+    background: rgba(30, 58, 138, 0.6);
+    border-color: var(--gold);
+    box-shadow: 0 0 15px var(--gold-glow);
+  }
+
+  .preset-title {
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 1rem;
+  }
+
+  .preset-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  @keyframes pulseSelected {
+    from { box-shadow: 0 0 15px var(--gold-glow); }
+    to { box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
+  }
+
+  @keyframes flashCorrect {
+    0%, 100% { background: var(--card-correct); }
+    50% { background: #34d399; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  @keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @media (max-width: 900px) {
+    .main-stage {
+      grid-template-columns: 1fr;
+    }
+    .sidebar-ladder {
+      display: none;
+    }
+    .answers-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="studio-spotlight"></div>
+
+<header>
+  <div class="logo-title">
+    <div class="logo-circle">?</div>
+    <div class="title-text">
+      <h1>Ai Là Triệu Phú - Hóa Học 10</h1>
+      <div class="player-tag" id="displayPlayerTag">Thí sinh: Chưa đăng ký</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="nav-btn gold" onclick="openSetupModal()">📥 Đổi bộ câu hỏi / Thí sinh</button>
+    <button class="nav-btn" onclick="openLeaderboardModal()">🏆 Bảng xếp hạng</button>
+    <button class="nav-btn" id="soundToggle" onclick="toggleSound()">🔊 Bật</button>
+    <button class="nav-btn quit-btn" onclick="stopGame()">Dừng chơi</button>
+  </div>
+</header>
+
+<div class="main-stage">
+  <!-- Left Area: Question Box and 4 Answers (Shifted UP and Enlarged!) -->
+  <div class="game-area">
+        <!-- 45s Countdown Timer -->
+    <div class="timer-container">
+      <div class="timer-clock" id="timerClock">
+        <span class="timer-icon">⏱️</span>
+        <span class="timer-digits" id="timerDigits">45</span><span class="timer-sec-label">s</span>
+      </div>
+      <div class="timer-track">
+        <div class="timer-fill" id="timerFill"></div>
+      </div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="hex-box">
+      <div class="question-badge" id="qBadge">CÂU HỎI 1</div>
+      <div class="question-text" id="qText">Đang tải câu hỏi...</div>
+    </div>
+
+    <!-- 4 Answers Grid -->
+    <div class="answers-grid" id="ansGrid">
+      <div class="answer-card" onclick="selectAnswer(0)" id="ansCard0">
+        <span class="answer-letter">A:</span>
+        <span class="answer-text" id="ansText0">...</span>
+      </div>
+      <div class="answer-card" onclick="selectAnswer(1)" id="ansCard1">
+        <span class="answer-letter">B:</span>
+        <span class="answer-text" id="ansText1">...</span>
+      </div>
+      <div class="answer-card" onclick="selectAnswer(2)" id="ansCard2">
+        <span class="answer-letter">C:</span>
+        <span class="answer-text" id="ansText2">...</span>
+      </div>
+      <div class="answer-card" onclick="selectAnswer(3)" id="ansCard3">
+        <span class="answer-letter">D:</span>
+        <span class="answer-text" id="ansText3">...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar: 4 Lifelines at the top + Money Ladder below -->
+  <div class="sidebar-ladder">
+    <!-- 4 Lifelines Bar relocated HERE! -->
+    <div class="sidebar-lifelines">
+      <button class="lifeline-btn" id="life5050" onclick="use5050()" title="50:50 - Loại bỏ 2 phương án sai">
+        <span class="lifeline-icon">🌓</span>
+        <span class="lifeline-label">50 : 50</span>
+      </button>
+      <button class="lifeline-btn" id="lifeCall" onclick="useCall()" title="Gọi điện cho các nhà bác học lừng danh">
+        <span class="lifeline-icon">📞</span>
+        <span class="lifeline-label">Bác học</span>
+      </button>
+      <button class="lifeline-btn" id="lifeAudience" onclick="useAudience()" title="Hỏi ý kiến khán giả trong lớp (Người thật)">
+        <span class="lifeline-icon">👥</span>
+        <span class="lifeline-label">Khán giả</span>
+      </button>
+      <button class="lifeline-btn" id="lifeExperts" onclick="useExperts()" title="Hỏi tổ tư vấn tại chỗ (Người thật)">
+        <span class="lifeline-icon">🎓</span>
+        <span class="lifeline-label">Tổ tư vấn</span>
+      </button>
+    </div>
+
+    <!-- Money Ladder -->
+    <div class="ladder-header">
+      <h2>BẬC TIỀN THƯỞNG</h2>
+    </div>
+    <ul class="ladder-list" id="ladderList">
+      <!-- Generated by JS -->
+    </ul>
+  </div>
+</div>
+
+<!-- Explanation & Next Question Box -->
+<div class="explanation-modal" id="expModal">
+  <div class="exp-content">
+    <h3 id="expTitle">🎉 CHÍNH XÁC!</h3>
+    <p id="expText">Giải thích chi tiết kiến thức...</p>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">TIẾP TỤC CÂU TIẾP THEO ➜</button>
+  </div>
+</div>
+
+<!-- Lifeline Modal: Call a Famous Scientist -->
+<div class="modal-overlay" id="callModal">
+  <div class="modal-card">
+    <h2>📞 KẾT NỐI VỚI CÁC NHÀ BÁC HỌC LỪNG DANH</h2>
+    <div class="call-avatar" id="scientistAvatar">👨‍🔬</div>
+    <h3 style="color: #38bdf8; font-size: 1.25rem;" id="advisorName">Dmitri Mendeleev</h3>
+    <p style="color: #94a3b8; font-size: 0.85rem;" id="advisorTitle">Cha đẻ của Bảng tuần hoàn các nguyên tố hóa học</p>
+    <div class="advisor-message" id="advisorMsg">
+      "Privet! Ta là Mendeleev đây..."
+    </div>
+    <button class="modal-close-btn" onclick="closeModal('callModal')">CẢM ƠN NHÀ BÁC HỌC / ĐÓNG LẠI</button>
+  </div>
+</div>
+
+<!-- SETUP MODAL: 1. CHỌN/NẠP BỘ CÂU HỎI TRƯỚC -> 2. GHI TÊN THÍ SINH SAU -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal-card" style="max-width: 680px; text-align: left;">
+    <h2 style="text-align: center; color: var(--gold-bright);">🎯 CHUẨN BỊ BƯỚC VÀO GHẾ NÓNG</h2>
+    <p style="text-align: center; color: #94a3b8; font-size: 0.95rem; margin-bottom: 14px;">
+      Chọn hoặc nạp bộ câu hỏi trước, sau đó ghi danh thí sinh để bắt đầu:
+    </p>
+
+    <h3 style="color: #38bdf8; font-size: 1rem; margin-bottom: 6px;">BƯỚC 1: CHỌN HOẶC NẠP BỘ CÂU HỎI</h3>
+    <div class="preset-card-group">
+      <div class="preset-card active" id="pCard2" onclick="selectPresetOption(2)">
+        <div>
+          <div class="preset-title">🧪 Bộ 2: Bài 6 (Tiết 1) - Cấu hình e nhóm A & Bán kính</div>
+          <div class="preset-desc">30 câu hỏi chuẩn hóa toàn diện Mục I và Mục II Bài 6 Hóa học 10.</div>
+        </div>
+        <span style="color: var(--gold); font-weight: 800;" id="pCheck2">✓ Đang chọn</span>
+      </div>
+
+      <div class="preset-card" id="pCard1" onclick="selectPresetOption(1)">
+        <div>
+          <div class="preset-title">📋 Bộ 1: Bài 5 - Cấu tạo Bảng tuần hoàn</div>
+          <div class="preset-desc">30 câu hỏi ôn tập nguyên tắc sắp xếp, ô, chu kì, nhóm A/B.</div>
+        </div>
+        <span style="color: #64748B; font-weight: 800;" id="pCheck1">Chọn</span>
+      </div>
+
+      <div class="preset-card" id="pCardCustom" onclick="toggleCustomImportArea()">
+        <div>
+          <div class="preset-title">📥 Tự dán bộ câu hỏi tùy chỉnh...</div>
+          <div class="preset-desc">Dán câu hỏi định dạng "Câu 1: ... A. B. C. D. Đáp án: ..."</div>
+        </div>
+        <span style="color: #64748B; font-weight: 800;" id="pCheckCustom">Mở</span>
+      </div>
+    </div>
+
+    <!-- Collapsible Custom Textarea -->
+    <div id="customImportArea" style="display: none; margin-bottom: 12px;">
+      <textarea id="setupCustomText" class="import-textarea" style="height: 140px;" placeholder="Dán bộ câu hỏi tùy biến vào đây..."></textarea>
+      <button class="btn-action primary" style="padding: 7px 16px; font-size: 0.85rem;" onclick="applyCustomQuestions()">Áp dụng câu hỏi đã dán</button>
+      <span id="customParseNotice" style="font-size: 0.85rem; color: #34d399; margin-left: 10px;"></span>
+    </div>
+
+    <h3 style="color: #38bdf8; font-size: 1rem; margin-top: 14px; margin-bottom: 6px;">BƯỚC 2: GHI TÊN THÍ SINH HOẶC ĐỘI THI</h3>
+    <div style="text-align: center;">
+      <input type="text" id="setupPlayerName" class="input-player-name" placeholder="Ví dụ: Nguyễn Văn An - Tổ 1" maxlength="35" />
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 14px; margin-top: 16px;">
+      <button class="btn-action primary" style="padding: 12px 32px; font-size: 1.05rem;" onclick="confirmSetupAndStart()">BẮT ĐẦU CHINH PHỤC 🚀</button>
+      <button class="btn-action secondary" onclick="closeModal('setupModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard Modal -->
+<div class="modal-overlay" id="leaderboardModal">
+  <div class="modal-card" style="max-width: 700px;">
+    <h2>🏆 BẢNG VÀNG XẾP HẠNG TRIỆU PHÚ</h2>
+    <p style="color: #94a3b8; font-size: 0.9rem;">Lưu danh những thí sinh xuất sắc nhất trên ghế nóng:</p>
+    <div style="max-height: 340px; overflow-y: auto;">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Hạng</th>
+            <th>Thí sinh</th>
+            <th>Câu đạt được</th>
+            <th>Tiền thưởng</th>
+            <th>Thời gian</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <!-- Rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div style="display: flex; justify-content: center; gap: 14px; margin-top: 14px;">
+      <button class="btn-action danger" onclick="resetLeaderboard()">🗑️ Reset Bảng xếp hạng</button>
+      <button class="btn-action secondary" onclick="closeModal('leaderboardModal')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Endgame Modal -->
+<div class="endgame-modal" id="endgameModal">
+  <div class="endgame-box">
+    <h1 id="endTitle">KẾT THÚC CUỘC CHƠI!</h1>
+    <p class="endgame-details" id="endDetails">Bạn đã hoàn thành xuất sắc thử thách!</p>
+    <div class="prize-announcement" id="endPrize">22.000.000 VNĐ</div>
+    <div style="display: flex; justify-content: center; gap: 14px;">
+      <button class="btn-action primary" style="padding: 12px 28px; font-size: 1rem;" onclick="openSetupModal()">THÍ SINH TIẾP THEO 👤</button>
+      <button class="btn-action secondary" style="padding: 12px 28px; font-size: 1rem;" onclick="openLeaderboardModal()">BẢNG XẾP HẠNG 🏆</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── BỘ 30 CÂU BÀI 5: CẤU TẠO BẢNG TUẦN HOÀN ──
+const questionsPreset1 = `Câu 1: Bảng tuần hoàn các nguyên tố hóa học hiện đại được sắp xếp theo nguyên tắc nào sau đây?
+A. Chiều tăng dần của khối lượng nguyên tử.
+B. Chiều tăng dần của điện tích hạt nhân nguyên tử.
+C. Chiều tăng dần của bán kính nguyên tử.
+D. Chiều giảm dần của độ âm điện.
+Đáp án: B
+
+Câu 2: Số thứ tự ô nguyên tố trong Bảng tuần hoàn luôn bằng với đại lượng nào sau đây?
+A. Số neutron trong hạt nhân.
+B. Số lớp electron của nguyên tử.
+C. Số hiệu nguyên tử (số proton và số electron).
+D. Số khối A của hạt nhân.
+Đáp án: C
+
+Câu 3: Các nguyên tố thuộc cùng một chu kì trong Bảng tuần hoàn có đặc điểm nào giống nhau?
+A. Cùng số electron hóa trị.
+B. Cùng số electron ở lớp ngoài cùng.
+C. Cùng số lớp electron trong nguyên tử.
+D. Cùng điện tích hạt nhân.
+Đáp án: C
+
+Câu 4: Bảng tuần hoàn hiện nay gồm có bao nhiêu chu kì và được phân chia như thế nào?
+A. 6 chu kì (3 chu kì nhỏ, 3 chu kì lớn).
+B. 7 chu kì (chu kì 1, 2, 3 là chu kì nhỏ; chu kì 4, 5, 6, 7 là chu kì lớn).
+C. 8 chu kì (4 chu kì nhỏ, 4 chu kì lớn).
+D. 7 chu kì (chu kì 1, 2, 3, 4 là chu kì nhỏ; chu kì 5, 6, 7 là chu kì lớn).
+Đáp án: B
+
+Câu 5: Chu kì 1 trong Bảng tuần hoàn gồm có bao nhiêu nguyên tố hóa học?
+A. 2 nguyên tố (H và He).
+B. 8 nguyên tố.
+C. 18 nguyên tố.
+D. 32 nguyên tố.
+Đáp án: A
+
+Câu 6: Chu kì 2 và chu kì 3 trong Bảng tuần hoàn mỗi chu kì có bao nhiêu nguyên tố?
+A. 2 nguyên tố.
+B. 8 nguyên tố.
+C. 18 nguyên tố.
+D. 32 nguyên tố.
+Đáp án: B
+
+Câu 7: Bảng tuần hoàn hiện đại có bao nhiêu cột và bao nhiêu nhóm nguyên tố?
+A. 16 cột, 16 nhóm.
+B. 18 cột, 16 nhóm (8 nhóm A và 8 nhóm B).
+C. 18 cột, 18 nhóm A.
+D. 14 cột, 8 nhóm B.
+Đáp án: B
+
+Câu 8: Nhóm VIIIB trong Bảng tuần hoàn đặc biệt ở điểm nào sau đây?
+A. Chỉ gồm có 1 cột duy nhất.
+B. Chiếm tới 3 cột (cột 8, 9, 10).
+C. Chứa các nguyên tố khí hiếm.
+D. Toàn bộ là các nguyên tố phi kim.
+Đáp án: B
+
+Câu 9: Các nguyên tố thuộc nhóm A trong Bảng tuần hoàn bao gồm những loại nguyên tố nào?
+A. Chỉ gồm các nguyên tố s.
+B. Chỉ gồm các nguyên tố p.
+C. Bao gồm các nguyên tố s và nguyên tố p.
+D. Bao gồm các nguyên tố d và nguyên tố f.
+Đáp án: C
+
+Câu 10: Các nguyên tố thuộc nhóm B (kim loại chuyển tiếp) trong Bảng tuần hoàn bao gồm:
+A. Nguyên tố s và nguyên tố p.
+B. Nguyên tố d và nguyên tố f.
+C. Chỉ gồm nguyên tố d.
+D. Chỉ gồm nguyên tố s.
+Đáp án: B
+
+Câu 11: Đối với các nguyên tố nhóm A, số electron hóa trị của nguyên tử bằng:
+A. Số thứ tự của chu kì.
+B. Số electron ở lớp ngoài cùng (bằng số thứ tự nhóm A).
+C. Số lớp electron trong nguyên tử.
+D. Số neutron trong hạt nhân.
+Đáp án: B
+
+Câu 12: Nguyên tố s là nguyên tố mà nguyên tử của nó có đặc điểm nào sau đây?
+A. Lớp ngoài cùng chỉ có phân lớp s.
+B. Electron cuối cùng được điền vào phân lớp s.
+C. Có 1 electron ở lớp ngoài cùng.
+D. Thuộc chu kì 1 trong bảng tuần hoàn.
+Đáp án: B
+
+Câu 13: Nguyên tố p là nguyên tố mà nguyên tử của nó có đặc điểm nào sau đây?
+A. Electron cuối cùng được điền vào phân lớp p.
+B. Có 3 phân lớp electron trong nguyên tử.
+C. Thuộc chu kì 2 hoặc chu kì 3.
+D. Có 5 electron ở lớp ngoài cùng.
+Đáp án: A
+
+Câu 14: Nguyên tử nguyên tố X có số hiệu nguyên tử Z = 11. Vị trí của X trong BTH là:
+A. Ô số 11, chu kì 3, nhóm IA.
+B. Ô số 11, chu kì 1, nhóm IIIA.
+C. Ô số 12, chu kì 3, nhóm IIA.
+D. Ô số 10, chu kì 2, nhóm VIIIA.
+Đáp án: A
+
+Câu 15: Nguyên tử nguyên tố Y có cấu hình electron: 1s² 2s² 2p⁶ 3s² 3p⁵. Vị trí của Y trong BTH là:
+A. Ô số 17, chu kì 3, nhóm VA.
+B. Ô số 17, chu kì 3, nhóm VIIA.
+C. Ô số 15, chu kì 3, nhóm VIIA.
+D. Ô số 17, chu kì 5, nhóm IIIA.
+Đáp án: B
+
+Câu 16: Nguyên tử nguyên tố Z có cấu hình electron lớp ngoài cùng là 4s¹. Nguyên tố Z thuộc:
+A. Chu kì 1, nhóm IVA.
+B. Chu kì 4, nhóm IA.
+C. Chu kì 4, nhóm VIIIA.
+D. Chu kì 3, nhóm IA.
+Đáp án: B
+
+Câu 17: Nguyên tử của nguyên tố nào sau đây có cấu hình electron lớp ngoài cùng đạt trạng thái bão hòa 8 electron (ns²np⁶)?
+A. Kim loại kiềm (nhóm IA).
+B. Halogen (nhóm VIIA).
+C. Khí hiếm (nhóm VIIIA, trừ He có 2e).
+D. Kim loại kiềm thổ (nhóm IIA).
+Đáp án: C
+
+Câu 18: Các nguyên tố nhóm IA (trừ hydrogen) có tên gọi chung là gì?
+A. Nhóm kim loại kiềm.
+B. Nhóm kim loại kiềm thổ.
+C. Nhóm halogen.
+D. Nhóm khí hiếm.
+Đáp án: A
+
+Câu 19: Các nguyên tố thuộc nhóm VIIA trong Bảng tuần hoàn có tên gọi chung là:
+A. Nhóm kim loại kiềm.
+B. Nhóm kim loại kiềm thổ.
+C. Nhóm halogen.
+D. Nhóm khí hiếm.
+Đáp án: C
+
+Câu 20: Các nguyên tố thuộc nhóm IIA trong Bảng tuần hoàn có tên gọi chung là:
+A. Nhóm kim loại kiềm.
+B. Nhóm kim loại kiềm thổ.
+C. Nhóm halogen.
+D. Nhóm chalcogen.
+Đáp án: B
+
+Câu 21: Nguyên tử có 3 lớp electron và có 2 electron ở lớp ngoài cùng là nguyên tố:
+A. Sodium (Na, Z = 11).
+B. Magnesium (Mg, Z = 12).
+C. Aluminium (Al, Z = 13).
+D. Calcium (Ca, Z = 20).
+Đáp án: B
+
+Câu 22: Nguyên tử của nguyên tố phi kim thường có bao nhiêu electron ở lớp ngoài cùng?
+A. 1, 2 hoặc 3 electron.
+B. 4 electron.
+C. 5, 6 hoặc 7 electron.
+D. 8 electron.
+Đáp án: C
+
+Câu 23: Nguyên tử của nguyên tố kim loại thường có bao nhiêu electron ở lớp ngoài cùng?
+A. 1, 2 hoặc 3 electron (trừ H, He, B).
+B. 5, 6 hoặc 7 electron.
+C. 8 electron.
+D. Luôn có 4 electron.
+Đáp án: A
+
+Câu 24: Cấu hình electron của ion Na⁺ (Z = 11) là:
+A. 1s² 2s² 2p⁶ 3s¹.
+B. 1s² 2s² 2p⁶.
+C. 1s² 2s² 2p⁶ 3s².
+D. 1s² 2s² 2p⁵.
+Đáp án: B
+
+Câu 25: Cấu hình electron của ion Cl⁻ (Z = 17) là:
+A. 1s² 2s² 2p⁶ 3s² 3p⁵.
+B. 1s² 2s² 2p⁶ 3s² 3p⁴.
+C. 1s² 2s² 2p⁶ 3s² 3p⁶.
+D. 1s² 2s² 2p⁶.
+Đáp án: C
+
+Câu 26: Cho nguyên tố sắt (Iron, Fe) có Z = 26, cấu hình electron: [Ar] 3d⁶ 4s². Fe là nguyên tố:
+A. Nguyên tố s thuộc nhóm IIA.
+B. Nguyên tố d thuộc nhóm VIIIB.
+C. Nguyên tố p thuộc nhóm VIIIA.
+D. Nguyên tố d thuộc nhóm IIB.
+Đáp án: B
+
+Câu 27: Hai nguyên tố X (Z = 11) và Y (Z = 19) cùng thuộc một nhóm A vì:
+A. Có cùng số lớp electron.
+B. Có cùng số proton trong hạt nhân.
+C. Có cùng 1 electron ở lớp ngoài cùng (cấu hình ns¹).
+D. Đều là các nguyên tố phi kim.
+Đáp án: C
+
+Câu 28: Hai nguyên tố A (Z = 12) và B (Z = 17) cùng thuộc chu kì 3 vì:
+A. Nguyên tử của chúng đều có 3 electron lớp ngoài cùng.
+B. Nguyên tử của chúng đều có 3 lớp electron.
+C. Đều có điện tích hạt nhân bằng 3+.
+D. Đều có 3 phân lớp electron.
+Đáp án: B
+
+Câu 29: Nhà bác học người Nga công bố Bảng tuần hoàn đầu tiên năm 1869 là:
+A. D. I. Mendeleev.
+B. J. J. Thomson.
+C. E. Rutherford.
+D. N. Bohr.
+Đáp án: A
+
+Câu 30: Bảng tuần hoàn hiện nay được sắp xếp theo định luật tuần hoàn hiện đại dựa trên:
+A. Khối lượng nguyên tử của nguyên tố.
+B. Điện tích hạt nhân nguyên tử của nguyên tố.
+C. Số khối của đồng vị bền nhất.
+D. Tỉ khối hơi của đơn chất.
+Đáp án: B`;
+
+// ── BỘ 30 CÂU BÀI 6 (TIẾT 1): CẤU HÌNH ELECTRON NHÓM A & BÁN KÍNH NGUYÊN TỬ ──
+const questionsPreset2 = `Câu 1: Electron hóa trị của các nguyên tố nhóm A là:
+A. Toàn bộ electron có trong nguyên tử.
+B. Các electron ở lớp ngoài cùng của nguyên tử.
+C. Các electron ở phân lớp s trong cùng.
+D. Số electron ở hạt nhân nguyên tử.
+Đáp án: B
+
+Câu 2: Số thứ tự của nhóm A trong Bảng tuần hoàn cho biết đại lượng nào sau đây?
+A. Số lớp electron của nguyên tử.
+B. Số electron ở lớp ngoài cùng (electron hóa trị).
+C. Số proton trong hạt nhân.
+D. Khối lượng nguyên tử tương đối.
+Đáp án: B
+
+Câu 3: Trong cùng một chu kì, đi từ trái sang phải, số electron lớp ngoài cùng của các nguyên tố nhóm A biến đổi như thế nào?
+A. Không đổi, đều bằng 8 electron.
+B. Tăng lần lượt từ 1 đến 8 electron.
+C. Giảm dần từ 8 xuống 1 electron.
+D. Biến đổi ngẫu nhiên không có quy luật.
+Đáp án: B
+
+Câu 4: Nguyên tử nguyên tố X có cấu hình electron: [Ne] 3s² 3p³. X thuộc nhóm nào trong Bảng tuần hoàn?
+A. Nhóm IIIA.
+B. Nhóm VA.
+C. Nhóm IIIB.
+D. Nhóm VB.
+Đáp án: B
+
+Câu 5: Các nguyên tố thuộc nhóm IA (kim loại kiềm) có cấu hình electron lớp ngoài cùng dạng tổng quát là:
+A. ns¹.
+B. ns².
+C. ns² np¹.
+D. ns² np⁵.
+Đáp án: A
+
+Câu 6: Các nguyên tố thuộc nhóm VIIA (halogen) có cấu hình electron lớp ngoài cùng dạng tổng quát là:
+A. ns² np⁵.
+B. ns² np⁶.
+C. ns² np³.
+D. ns² np⁴.
+Đáp án: A
+
+Câu 7: Nguyên tố nào sau đây chỉ có 2 electron ở lớp ngoài cùng nhưng lại là khí hiếm xếp ở nhóm VIIIA?
+A. Beryllium (Be).
+B. Magnesium (Mg).
+C. Helium (He).
+D. Hydrogen (H).
+Đáp án: C
+
+Câu 8: Cấu hình electron lớp ngoài cùng của nguyên tử nguyên tố nhóm IIA là:
+A. ns¹.
+B. ns².
+C. ns² np².
+D. (n-1)d² ns².
+Đáp án: B
+
+Câu 9: Sự biến đổi tuần hoàn tính chất của các nguyên tố khi điện tích hạt nhân tăng bắt nguồn từ nguyên nhân sâu xa nào?
+A. Do sự lặp lại tuần hoàn cấu hình electron lớp ngoài cùng.
+B. Do khối lượng nguyên tử tăng đều đặn.
+C. Do số hạt neutron tăng nhanh chóng.
+D. Do sự biến đổi số khối của các đồng vị.
+Đáp án: A
+
+Câu 10: Trong cùng một nhóm A, đi từ trên xuống dưới, cấu hình electron lớp ngoài cùng của các nguyên tử có đặc điểm:
+A. Khác nhau hoàn toàn về số electron.
+B. Tương tự nhau (có cùng số electron lớp ngoài cùng).
+C. Có số electron lớp ngoài cùng tăng dần.
+D. Có số electron lớp ngoài cùng giảm dần.
+Đáp án: B
+
+Câu 11: Nguyên tử của nguyên tố nào sau đây có 4 electron ở lớp ngoài cùng?
+A. Carbon (C, Z = 6: 1s² 2s² 2p²).
+B. Nitrogen (N, Z = 7).
+C. Oxygen (O, Z = 8).
+D. Fluorine (F, Z = 9).
+Đáp án: A
+
+Câu 12: Nguyên tố X thuộc chu kì 3, nhóm VIA. Cấu hình electron của nguyên tử X là:
+A. 1s² 2s² 2p⁶ 3s² 3p⁴.
+B. 1s² 2s² 2p⁶ 3s² 3p⁶.
+C. 1s² 2s² 2p⁶ 3s² 3p².
+D. 1s² 2s² 2p⁶ 3s¹ 3p⁵.
+Đáp án: A
+
+Câu 13: Nhóm nguyên tố nào sau đây có cấu hình electron lớp ngoài cùng bão hòa 8 electron (ns²np⁶) đặc biệt bền vững?
+A. Nhóm IA (Kim loại kiềm).
+B. Nhóm VIIA (Halogen).
+C. Nhóm VIIIA (Khí hiếm).
+D. Nhóm IIA (Kim loại kiềm thổ).
+Đáp án: C
+
+Câu 14: Nguyên tử của nguyên tố kim loại nhóm A thường có bao nhiêu electron ở lớp ngoài cùng?
+A. 1, 2 hoặc 3 electron.
+B. 5, 6 hoặc 7 electron.
+C. 8 electron.
+D. Luôn có 4 electron.
+Đáp án: A
+
+Câu 15: Nguyên tử của nguyên tố phi kim nhóm A thường có bao nhiêu electron ở lớp ngoài cùng?
+A. 1, 2 hoặc 3 electron.
+B. 5, 6 hoặc 7 electron.
+C. Luôn có 8 electron.
+D. Chỉ có 2 electron.
+Đáp án: B
+
+Câu 16: Bán kính nguyên tử được định nghĩa là:
+A. Khoảng cách từ hạt nhân đến lớp electron ngoài cùng.
+B. Đường kính của hạt nhân nguyên tử.
+C. Khoảng cách giữa hai electron gần nhau nhất.
+D. Bề dày của đám mây electron.
+Đáp án: A
+
+Câu 17: Trong thực nghiệm, bán kính nguyên tử trong phân tử đơn chất được xác định bằng công thức nào?
+A. r = d (khoảng cách giữa hai hạt nhân).
+B. r = d / 2 (một nửa khoảng cách giữa hai hạt nhân).
+C. r = 2d.
+D. r = d / 4.
+Đáp án: B
+
+Câu 18: Đơn vị đo nào sau đây thường được sử dụng phổ biến nhất để biểu thị bán kính nguyên tử?
+A. Mét (m).
+B. Milimét (mm).
+C. Picomet (pm, 1 pm = 10⁻¹² m).
+D. Kilômét (km).
+Đáp án: C
+
+Câu 19: Hai yếu tố cốt lõi nào sau đây quyết định kích thước bán kính của một nguyên tử?
+A. Số neutron và số khối A.
+B. Số lớp electron và điện tích hạt nhân hiệu dụng.
+C. Khối lượng nguyên tử và nhiệt độ sôi.
+D. Số hạt proton và số hạt neutron.
+Đáp án: B
+
+Câu 20: Trong một chu kì, đi từ trái sang phải theo chiều tăng của Z, bán kính nguyên tử có xu hướng:
+A. Tăng dần đều.
+B. Giảm dần.
+C. Không thay đổi.
+D. Tăng rồi sau đó giảm đột ngột.
+Đáp án: B
+
+Câu 21: Vì sao trong một chu kì, đi từ trái sang phải bán kính nguyên tử có xu hướng giảm dần?
+A. Do số lớp electron giảm dần.
+B. Do cùng số lớp electron nhưng điện tích hạt nhân tăng hút mạnh mây electron.
+C. Do số electron lớp ngoài cùng giảm dần.
+D. Do khối lượng nguyên tử giảm.
+Đáp án: B
+
+Câu 22: Trong một nhóm A, đi từ trên xuống dưới theo chiều tăng của Z, bán kính nguyên tử có xu hướng:
+A. Giảm dần.
+B. Tăng dần.
+C. Không thay đổi.
+D. Biến đổi tuần hoàn không liên tục.
+Đáp án: B
+
+Câu 23: Nguyên nhân chủ yếu làm cho bán kính nguyên tử tăng dần từ trên xuống dưới trong một nhóm A là:
+A. Do số lớp electron tăng dần chiếm ưu thế.
+B. Do điện tích hạt nhân giảm dần.
+C. Do số electron lớp ngoài cùng tăng nhanh.
+D. Do lực hút của hạt nhân tăng mạnh.
+Đáp án: A
+
+Câu 24: Cho các nguyên tố chu kì 3: ₁₁Na, ₁₂Mg, ₁₃Al, ₁₇Cl. Nguyên tử có bán kính lớn nhất là:
+A. Chlorine (Cl).
+B. Aluminium (Al).
+C. Magnesium (Mg).
+D. Sodium (Na).
+Đáp án: D
+
+Câu 25: Cho các nguyên tố kim loại kiềm nhóm IA: ₃Li, ₁₁Na, ₁₉K, ₅₅Cs. Nguyên tử có bán kính lớn nhất là:
+A. Lithium (Li).
+B. Sodium (Na).
+C. Potassium (K).
+D. Caesium (Cs).
+Đáp án: D
+
+Câu 26: Nguyên tử của nguyên tố nào sau đây có bán kính nhỏ nhất trong Chu kì 2?
+A. Lithium (Li, Z = 3).
+B. Carbon (C, Z = 6).
+C. Oxygen (O, Z = 8).
+D. Fluorine (F, Z = 9).
+Đáp án: D
+
+Câu 27: Khi so sánh bán kính giữa ion Na⁺ và nguyên tử Na, khẳng định nào sau đây đúng?
+A. r(Na⁺) < r(Na) vì ion Na⁺ bị mất lớp electron ngoài cùng.
+B. r(Na⁺) > r(Na) vì mang điện tích dương.
+C. r(Na⁺) = r(Na) vì số proton không đổi.
+D. Không thể so sánh được kích thước.
+Đáp án: A
+
+Câu 28: Khi so sánh bán kính giữa ion Cl⁻ và nguyên tử Cl, khẳng định nào sau đây đúng?
+A. r(Cl⁻) < r(Cl) vì hạt nhân hút mạnh hơn.
+B. r(Cl⁻) > r(Cl) vì nhận thêm 1 electron làm tăng lực đẩy giữa các electron.
+C. r(Cl⁻) = r(Cl) vì cùng có 3 lớp electron.
+D. r(Cl⁻) luôn bằng một nửa r(Cl).
+Đáp án: B
+
+Câu 29: Quy tắc so sánh kích thước tổng quát nào sau đây luôn đúng giữa cation, nguyên tử và anion tương ứng?
+A. r(Anion) < r(Nguyên tử) < r(Cation).
+B. r(Cation) < r(Nguyên tử) < r(Anion).
+C. r(Nguyên tử) < r(Cation) < r(Anion).
+D. r(Cation) = r(Nguyên tử) = r(Anion).
+Đáp án: B
+
+Câu 30: Ứng dụng pin sạc Lithium-ion (trong điện thoại, xe điện) hoạt động hiệu quả dựa trên đặc điểm cấu tạo nào của Lithium?
+A. Khối lượng nguyên tử của Lithium rất nặng.
+B. Bán kính nguyên tử và ion Li⁺ siêu nhỏ giúp di chuyển cực nhanh qua màng ngăn.
+C. Lithium có độ âm điện lớn nhất trong Bảng tuần hoàn.
+D. Lithium có cấu hình electron bão hòa như khí hiếm.
+Đáp án: B`;
+
+const rewards = [
+  "200.000 VNĐ",
+  "400.000 VNĐ",
+  "600.000 VNĐ",
+  "1.000.000 VNĐ",
+  "2.000.000 VNĐ",    // Mốc 1 (Câu 5)
+  "3.000.000 VNĐ",
+  "6.000.000 VNĐ",
+  "10.000.000 VNĐ",
+  "14.000.000 VNĐ",
+  "22.000.000 VNĐ",   // Mốc 2 (Câu 10)
+  "30.000.000 VNĐ",
+  "40.000.000 VNĐ",
+  "60.000.000 VNĐ",
+  "85.000.000 VNĐ",
+  "150.000.000 VNĐ"  // Mốc 3 (Câu 15)
+];
+
+let questionBank = [];
+let activeQuiz = [];
+let currentQ = 0;
+let isAnswerLocked = false;
+let soundEnabled = true;
+let currentPlayer = "Học sinh 1";
+let selectedPreset = 2; // Default to Preset 2 (Bài 6 Tiết 1)
+
+let used5050 = false;
+let usedCall = false;
+let usedAudience = false;
+let usedExperts = false;
+
+// ── BỘ TÁCH CÚ PHÁP TỰ ĐỘNG THÔNG MINH ──
+function parseRobustQuestions(text) {
+  const lines = text.split(/\r?\n/);
+  const questions = [];
+  let currentQ = null;
+  let currentField = null;
+
+  function finalizeCurrent() {
+    if (currentQ && currentQ.q && currentQ.opts.A && currentQ.opts.B && currentQ.opts.C && currentQ.opts.D) {
+      let ansLetter = (currentQ.ansLetter || 'A').toUpperCase();
+      let ansIdx = ['A', 'B', 'C', 'D'].indexOf(ansLetter);
+      if (ansIdx === -1) ansIdx = 0;
+      
+      questions.push({
+        q: currentQ.q.trim(),
+        opts: [
+          currentQ.opts.A.trim(),
+          currentQ.opts.B.trim(),
+          currentQ.opts.C.trim(),
+          currentQ.opts.D.trim()
+        ],
+        ans: ansIdx,
+        exp: currentQ.exp ? currentQ.exp.trim() : ('Đáp án chính xác là ' + ['A','B','C','D'][ansIdx] + '.')
+      });
+    }
+    currentQ = null;
+    currentField = null;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const ansMatch = line.match(/^(?:Đáp\s*án|Key|Đ\/a|ĐA)\s*[:=.]*\s*([A-D])(.*)/i);
+    const expMatch = line.match(/^(?:Giải\s*thích|Lời\s*giải)\s*[:=.]*\s*(.*)/i);
+    const optMatch = line.match(/^([A-D])\s*[\.:\)\/\-]\s*(.*)/i);
+    const qHeaderMatch = line.match(/^(?:Câu\s*\d+|\d+)\s*[\.:\s\-]+\s*(.*)/i);
+
+    if (ansMatch) {
+      if (currentQ) {
+        currentQ.ansLetter = ansMatch[1].toUpperCase();
+        if (ansMatch[2] && ansMatch[2].trim()) {
+          currentQ.exp = (currentQ.exp ? currentQ.exp + ' ' : '') + ansMatch[2].trim();
+        }
+        currentField = 'ans';
+      }
+    } else if (expMatch) {
+      if (currentQ) {
+        currentQ.exp = (currentQ.exp ? currentQ.exp + ' ' : '') + expMatch[1].trim();
+        currentField = 'exp';
+      }
+    } else if (optMatch) {
+      const letter = optMatch[1].toUpperCase();
+      if (!currentQ) currentQ = { q: 'Câu hỏi', opts: {}, ansLetter: 'A' };
+      currentQ.opts[letter] = optMatch[2].trim();
+      currentField = letter;
+    } else if (qHeaderMatch && (!currentField || currentField === 'ans' || currentField === 'D' || currentField === 'exp')) {
+      finalizeCurrent();
+      currentQ = { q: qHeaderMatch[1].trim(), opts: {}, ansLetter: 'A' };
+      currentField = 'q';
+    } else {
+      if (currentQ) {
+        if (currentField === 'q') currentQ.q += ' ' + line;
+        else if (['A','B','C','D'].includes(currentField)) currentQ.opts[currentField] += ' ' + line;
+        else if (currentField === 'exp' || currentField === 'ans') currentQ.exp = (currentQ.exp ? currentQ.exp + ' ' : '') + line;
+      }
+    }
+  }
+
+  finalizeCurrent();
+  return questions;
+}
+
+// ── AUDIO ──
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq, type = 'sine', duration = 0.2, gainVal = 0.15) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playSelectSound() { playTone(440, 'triangle', 0.15, 0.2); }
+function playSuspenseSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  playTone(220, 'sine', 0.4, 0.2);
+  setTimeout(() => playTone(207.65, 'sine', 0.6, 0.2), 300);
+}
+function playCorrectSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  const notes = [261.63, 329.63, 392.00, 523.25];
+  notes.forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.35, 0.25), i * 130));
+}
+function playWrongSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  playTone(185, 'sawtooth', 0.4, 0.3);
+  setTimeout(() => playTone(130.81, 'sawtooth', 0.7, 0.35), 200);
+}
+function playMilestoneSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  const fanfare = [392, 440, 523, 659, 784];
+  fanfare.forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.4, 0.2), i * 110));
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? "🔊 Bật" : "🔇 Tắt";
+}
+
+// ── LADDER ──
+function initLadder() {
+  const ladderList = document.getElementById('ladderList');
+  ladderList.innerHTML = '';
+  for (let i = 14; i >= 0; i--) {
+    const li = document.createElement('li');
+    li.className = 'ladder-item';
+    li.id = `ladder-${i}`;
+    if (i === 4 || i === 9 || i === 14) li.classList.add('milestone');
+    li.innerHTML = `
+      <span class="ladder-num">${i + 1}</span>
+      <span class="reward-val">${rewards[i]}</span>
+    `;
+    ladderList.appendChild(li);
+  }
+}
+
+function updateLadder() {
+  for (let i = 0; i < 15; i++) {
+    const item = document.getElementById(`ladder-${i}`);
+    if (!item) continue;
+    item.classList.remove('active', 'passed');
+    if (i < currentQ) item.classList.add('passed');
+    else if (i === currentQ) item.classList.add('active');
+  }
+}
+
+function prepareRandomQuiz() {
+  if (!questionBank || questionBank.length === 0) {
+    questionBank = parseRobustQuestions(questionsPreset2);
+  }
+
+  const shuffled = [...questionBank].sort(() => Math.random() - 0.5);
+  activeQuiz = shuffled.slice(0, 15);
+  
+  while (activeQuiz.length < 15 && questionBank.length > 0) {
+    activeQuiz.push(questionBank[Math.floor(Math.random() * questionBank.length)]);
+  }
+}
+
+
+// ── 45-SECOND COUNTDOWN TIMER ──
+const QUESTION_TIMEOUT = 45;
+let timeLeft = QUESTION_TIMEOUT;
+let timerInterval = null;
+let isTimerPaused = false;
+
+function startTimer() {
+  stopTimer();
+  timeLeft = QUESTION_TIMEOUT;
+  isTimerPaused = false;
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    if (isTimerPaused) return;
+
+    timeLeft--;
+    updateTimerDisplay();
+
+    if (timeLeft <= 5 && timeLeft > 0) {
+      playTone(850, 'square', 0.08, 0.2);
+    }
+
+    if (timeLeft <= 0) {
+      stopTimer();
+      handleTimeOut();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function pauseTimer() {
+  isTimerPaused = true;
+}
+
+function resumeTimer() {
+  isTimerPaused = false;
+}
+
+function updateTimerDisplay() {
+  const digits = document.getElementById('timerDigits');
+  const fill = document.getElementById('timerFill');
+  const clock = document.getElementById('timerClock');
+  if (!digits || !fill || !clock) return;
+
+  digits.textContent = timeLeft < 10 ? `0${timeLeft}` : timeLeft;
+  const pct = (timeLeft / QUESTION_TIMEOUT) * 100;
+  fill.style.width = `${Math.max(0, pct)}%`;
+
+  clock.classList.remove('warning', 'danger');
+  fill.classList.remove('warning', 'danger');
+
+  if (timeLeft <= 5) {
+    clock.classList.add('danger');
+    fill.classList.add('danger');
+  } else if (timeLeft <= 15) {
+    clock.classList.add('warning');
+    fill.classList.add('warning');
+  }
+}
+
+function handleTimeOut() {
+  if (isAnswerLocked) return;
+  isAnswerLocked = true;
+  playWrongSound();
+
+  const correctIdx = activeQuiz[currentQ].ans;
+  const correctCard = document.getElementById(`ansCard${correctIdx}`);
+  if (correctCard) correctCard.classList.add('correct');
+
+  const modal = document.getElementById('expModal');
+  const title = document.getElementById('expTitle');
+  const text = document.getElementById('expText');
+  const nextBtn = document.getElementById('nextBtn');
+  const q = activeQuiz[currentQ];
+
+  title.innerHTML = `⏰ HẾT THỜI GIAN 45 GIÂY!`;
+  title.style.color = '#ef4444';
+  text.innerHTML = `Đã hết thời gian 45 giây quy định cho câu hỏi này.<br><br><b>Đáp án đúng là ${['A','B','C','D'][q.ans]}:</b> ${q.opts[q.ans]}<br><b>Giải thích:</b> ${q.exp}`;
+  nextBtn.textContent = "XEM KẾT QUẢ & LƯU BẢNG ĐIỂM 📋";
+  modal.style.display = 'block';
+}
+
+function startNewGame() {
+  currentQ = 0;
+  isAnswerLocked = false;
+  used5050 = false;
+  usedCall = false;
+  usedAudience = false;
+  usedExperts = false;
+
+  ['life5050', 'lifeCall', 'lifeAudience', 'lifeExperts'].forEach(id => {
+    document.getElementById(id).classList.remove('used');
+  });
+
+  prepareRandomQuiz();
+  loadQuestion();
+}
+
+function loadQuestion() {
+  isAnswerLocked = false;
+  document.getElementById('expModal').style.display = 'none';
+
+  const q = activeQuiz[currentQ];
+  document.getElementById('qBadge').textContent = `CÂU HỎI ${currentQ + 1} / 15  •  ${rewards[currentQ]}`;
+  document.getElementById('qText').textContent = q.q;
+
+  for (let i = 0; i < 4; i++) {
+    const card = document.getElementById(`ansCard${i}`);
+    const text = document.getElementById(`ansText${i}`);
+    card.className = 'answer-card';
+    text.textContent = q.opts[i];
+  }
+
+  updateLadder();
+  startTimer();
+}
+
+function selectAnswer(idx) {
+  if (isAnswerLocked) return;
+  isAnswerLocked = true;
+  stopTimer();
+  playSelectSound();
+
+  const selectedCard = document.getElementById(`ansCard${idx}`);
+  selectedCard.classList.add('selected');
+  playSuspenseSound();
+
+  setTimeout(() => {
+    const correctIdx = activeQuiz[currentQ].ans;
+    const correctCard = document.getElementById(`ansCard${correctIdx}`);
+
+    if (idx === correctIdx) {
+      selectedCard.classList.remove('selected');
+      selectedCard.classList.add('correct');
+      playCorrectSound();
+
+      if (currentQ === 4 || currentQ === 9 || currentQ === 14) {
+        setTimeout(playMilestoneSound, 350);
+      }
+      showExplanation(true);
+    } else {
+      selectedCard.classList.remove('selected');
+      selectedCard.classList.add('wrong');
+      correctCard.classList.add('correct');
+      playWrongSound();
+
+      setTimeout(() => showExplanation(false), 800);
+    }
+  }, 1400);
+}
+
+function showExplanation(isCorrect) {
+  const modal = document.getElementById('expModal');
+  const title = document.getElementById('expTitle');
+  const text = document.getElementById('expText');
+  const nextBtn = document.getElementById('nextBtn');
+  const q = activeQuiz[currentQ];
+
+  if (isCorrect) {
+    title.innerHTML = `🎉 CHÍNH XÁC! ${currentPlayer} VƯỢT QUA CÂU ${currentQ + 1}`;
+    title.style.color = '#10b981';
+    text.innerHTML = `<b>Kiến thức trọng tâm:</b> ${q.exp}`;
+    nextBtn.textContent = (currentQ === 14) ? "NHẬN 150.000.000 VNĐ 🏆" : "TIẾP TỤC CÂU TIẾP THEO ➜";
+  } else {
+    title.innerHTML = `❌ RẤT TIẾC, CHƯA CHÍNH XÁC!`;
+    title.style.color = '#ef4444';
+    text.innerHTML = `<b>Đáp án đúng là ${['A','B','C','D'][q.ans]}:</b> ${q.opts[q.ans]}<br><b>Giải thích:</b> ${q.exp}`;
+    nextBtn.textContent = "XEM KẾT QUẢ & LƯU BẢNG ĐIỂM 📋";
+  }
+
+  modal.style.display = 'block';
+}
+
+function nextQuestion() {
+  const correctIdx = activeQuiz[currentQ].ans;
+  const isCorrect = document.getElementById(`ansCard${correctIdx}`).classList.contains('correct') &&
+                    !document.querySelector('.answer-card.wrong');
+
+  if (isCorrect) {
+    if (currentQ === 14) {
+      endGame(true, "150.000.000 VNĐ", 15, "XUẤT SẮC! BẠN LÀ NHÀ VÔ ĐỊCH TRIỆU PHÚ HÓA HỌC!");
+    } else {
+      currentQ++;
+      loadQuestion();
+    }
+  } else {
+    let prize = "0 VNĐ";
+    if (currentQ >= 10) prize = "22.000.000 VNĐ (Mốc an toàn 2)";
+    else if (currentQ >= 5) prize = "2.000.000 VNĐ (Mốc an toàn 1)";
+    endGame(false, prize, currentQ, "Cuộc chơi dừng lại, cảm ơn bạn đã tham gia thi đấu hết mình!");
+  }
+}
+
+function stopGame() {
+  stopTimer();
+  if (isAnswerLocked && currentQ > 0) return;
+  const prize = currentQ > 0 ? rewards[currentQ - 1] : "0 VNĐ";
+  endGame(false, prize, currentQ, "Thí sinh đã dừng cuộc chơi an toàn và bảo toàn số tiền thưởng!");
+}
+
+function endGame(isVictory, prize, questionsCompleted, msg) {
+  stopTimer();
+  document.getElementById('expModal').style.display = 'none';
+  const endModal = document.getElementById('endgameModal');
+  document.getElementById('endTitle').textContent = isVictory ? "🏆 CHIẾN THẮNG TUYỆT ĐỐI! 🏆" : "KẾT THÚC LƯỢT CHƠI";
+  document.getElementById('endDetails').textContent = `${currentPlayer}: ${msg}`;
+  document.getElementById('endPrize').textContent = prize;
+  endModal.style.display = 'flex';
+  if (isVictory) playMilestoneSound();
+
+  saveToLeaderboard(currentPlayer, questionsCompleted, prize);
+}
+
+// ── 4 SỰ TRỢ GIÚP ──
+function use5050() {
+  if (used5050 || isAnswerLocked) return;
+  used5050 = true;
+  document.getElementById('life5050').classList.add('used');
+  playTone(550, 'triangle', 0.25, 0.2);
+
+  const correct = activeQuiz[currentQ].ans;
+  let wrongIndices = [0, 1, 2, 3].filter(i => i !== correct);
+  wrongIndices.sort(() => Math.random() - 0.5);
+
+  document.getElementById(`ansCard${wrongIndices[0]}`).classList.add('disabled');
+  document.getElementById(`ansCard${wrongIndices[1]}`).classList.add('disabled');
+}
+
+// ── GỌI ĐIỆN THOẠI CHO CÁC NHÀ BÁC HỌC LỪNG DANH ──
+function useCall() {
+  if (usedCall || isAnswerLocked) return;
+  usedCall = true;
+  document.getElementById('lifeCall').classList.add('used');
+  playTone(600, 'sine', 0.3, 0.2);
+
+  const correct = activeQuiz[currentQ].ans;
+  const letter = ['A', 'B', 'C', 'D'][correct];
+
+  const scientists = [
+    {
+      name: "Dmitri Mendeleev (1834 - 1907)",
+      avatar: "👨‍🔬",
+      title: "Nhà hóa học Nga, cha đẻ của Bảng tuần hoàn các nguyên tố hóa học",
+      msg: `"Privet! Ta là Mendeleev đây. Ta đã dành cả đời để sắp xếp trật tự tuần hoàn các nguyên tố này vào năm 1869. Dựa trên quy luật tuần hoàn tự nhiên, ta khẳng định 100% phương án chính xác là ${letter}!"`
+    },
+    {
+      name: "Marie Curie (1867 - 1934)",
+      avatar: "👩‍🔬",
+      title: "Nhà bác học vĩ đại đạt 2 giải Nobel Vật lí và Hóa học",
+      msg: `"Bonjour! Marie Curie đây. Trong nghiên cứu phóng xạ và khám phá nguyên tử, sự chính xác là tuyệt đối. Tôi tin chắc đáp án đúng của câu hỏi này là ${letter}!"`
+    },
+    {
+      name: "Niels Bohr (1885 - 1962)",
+      avatar: "👨‍🏫",
+      title: "Nhà vật lí Đan Mạch, cha đẻ mô hình quỹ đạo hành tinh nguyên tử",
+      msg: `"Guten Tag! Tôi là Niels Bohr. Dựa trên cấu trúc các mức năng lượng và số electron ở các lớp vỏ nguyên tử, không thể có phương án nào chuẩn xác hơn ${letter}!"`
+    },
+    {
+      name: "Ernest Rutherford (1871 - 1937)",
+      avatar: "🔬",
+      title: "Nhà bác học khám phá ra hạt nhân nguyên tử (Giải Nobel Hóa học 1908)",
+      msg: `"Hello! Rutherford đây. Với hạt nhân mang điện tích dương và lực hút tĩnh điện chi phối mây electron, tôi khẳng định chắc chắn đáp án là ${letter}!"`
+    },
+    {
+      name: "Antoine Lavoisier (1743 - 1794)",
+      avatar: "⚖️",
+      title: "Cha đẻ của Hóa học hiện đại, định luật bảo toàn khối lượng",
+      msg: `"Không có gì tự sinh ra, không có gì tự mất đi, và đáp án chính xác của câu này chắc chắn không thể thoát khỏi phương án ${letter}!"`
+    }
+  ];
+
+  const s = scientists[Math.floor(Math.random() * scientists.length)];
+  document.getElementById('scientistAvatar').textContent = s.avatar;
+  document.getElementById('advisorName').textContent = s.name;
+  document.getElementById('advisorTitle').textContent = s.title;
+  document.getElementById('advisorMsg').innerHTML = s.msg;
+  document.getElementById('callModal').style.display = 'flex';
+  pauseTimer();
+}
+
+// KHÁN GIẢ & TỔ TƯ VẤN: CHỈ HIỆN ĐÃ SỬ DỤNG, KHÔNG HIỆN POPUP / LỜI DẪN
+function useAudience() {
+  if (usedAudience || isAnswerLocked) return;
+  usedAudience = true;
+  document.getElementById('lifeAudience').classList.add('used');
+  playTone(520, 'triangle', 0.25, 0.2);
+}
+
+function useExperts() {
+  if (usedExperts || isAnswerLocked) return;
+  usedExperts = true;
+  document.getElementById('lifeExperts').classList.add('used');
+  playTone(540, 'triangle', 0.25, 0.2);
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  if (id === 'callModal') resumeTimer();
+}
+
+// ── SETUP MODAL LOGIC (NẠP CÂU HỎI TRƯỚC -> GHI TÊN THÍ SINH SAU) ──
+function openSetupModal() {
+  document.getElementById('endgameModal').style.display = 'none';
+  document.getElementById('setupModal').style.display = 'flex';
+  document.getElementById('setupPlayerName').value = currentPlayer || '';
+}
+
+function selectPresetOption(num) {
+  selectedPreset = num;
+  document.getElementById('pCard1').classList.toggle('active', num === 1);
+  document.getElementById('pCheck1').textContent = num === 1 ? "✓ Đang chọn" : "Chọn";
+  document.getElementById('pCheck1').style.color = num === 1 ? "var(--gold)" : "#64748B";
+
+  document.getElementById('pCard2').classList.toggle('active', num === 2);
+  document.getElementById('pCheck2').textContent = num === 2 ? "✓ Đang chọn" : "Chọn";
+  document.getElementById('pCheck2').style.color = num === 2 ? "var(--gold)" : "#64748B";
+
+  document.getElementById('pCardCustom').classList.remove('active');
+  document.getElementById('pCheckCustom').textContent = "Mở";
+  document.getElementById('pCheckCustom').style.color = "#64748B";
+  document.getElementById('customImportArea').style.display = 'none';
+
+  if (num === 1) {
+    questionBank = parseRobustQuestions(questionsPreset1);
+  } else if (num === 2) {
+    questionBank = parseRobustQuestions(questionsPreset2);
+  }
+}
+
+function toggleCustomImportArea() {
+  const area = document.getElementById('customImportArea');
+  const isHidden = (area.style.display === 'none' || !area.style.display);
+  area.style.display = isHidden ? 'block' : 'none';
+
+  document.getElementById('pCardCustom').classList.toggle('active', isHidden);
+  document.getElementById('pCheckCustom').textContent = isHidden ? "Đang mở" : "Mở";
+  document.getElementById('pCheckCustom').style.color = isHidden ? "var(--gold)" : "#64748B";
+}
+
+function applyCustomQuestions() {
+  const text = document.getElementById('setupCustomText').value.trim();
+  if (!text) {
+    alert("Vui lòng dán nội dung bộ câu hỏi vào khung văn bản!");
+    return;
+  }
+  const parsed = parseRobustQuestions(text);
+  if (parsed.length === 0) {
+    alert("Không tìm thấy câu hỏi hợp lệ! Vui lòng kiểm tra định dạng 'Câu... A. B. C. D. Đáp án:...'");
+    return;
+  }
+  questionBank = parsed;
+  selectedPreset = 0; // Custom
+  document.getElementById('pCard1').classList.remove('active');
+  document.getElementById('pCheck1').textContent = "Chọn";
+  document.getElementById('pCard2').classList.remove('active');
+  document.getElementById('pCheck2').textContent = "Chọn";
+  document.getElementById('customParseNotice').textContent = `✓ Đã nạp thành công ${parsed.length} câu hỏi!`;
+}
+
+function confirmSetupAndStart() {
+  // If custom text is present and not yet parsed
+  const customText = document.getElementById('setupCustomText').value.trim();
+  if (selectedPreset === 0 && customText && (!questionBank || questionBank.length === 0)) {
+    applyCustomQuestions();
+  }
+
+  const nameVal = document.getElementById('setupPlayerName').value.trim();
+  currentPlayer = nameVal || `Thí sinh ${Math.floor(Math.random() * 90) + 10}`;
+  document.getElementById('displayPlayerTag').textContent = `Thí sinh: ${currentPlayer}`;
+
+  closeModal('setupModal');
+  startNewGame();
+}
+
+// ── BẢNG XẾP HẠNG ──
+function getLeaderboard() {
+  try {
+    const raw = localStorage.getItem('altp_leaderboard');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveToLeaderboard(name, qCompleted, prize) {
+  const list = getLeaderboard();
+  const dateStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + 
+                  new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  
+  list.push({
+    name: name,
+    q: qCompleted,
+    prize: prize,
+    date: dateStr,
+    timestamp: Date.now()
+  });
+
+  list.sort((a, b) => b.q - a.q || b.timestamp - a.timestamp);
+  localStorage.setItem('altp_leaderboard', JSON.stringify(list.slice(0, 30)));
+}
+
+function openLeaderboardModal() {
+  const list = getLeaderboard();
+  const tbody = document.getElementById('leaderboardBody');
+  tbody.innerHTML = '';
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="leaderboard-empty">Chưa có thí sinh nào ghi danh. Hãy là người đầu tiên!</td></tr>`;
+  } else {
+    list.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      let medal = `${index + 1}`;
+      if (index === 0) medal = '🥇 1';
+      else if (index === 1) medal = '🥈 2';
+      else if (index === 2) medal = '🥉 3';
+
+      tr.innerHTML = `
+        <td style="font-weight: 800; color: ${index < 3 ? 'var(--gold)' : '#fff'};">${medal}</td>
+        <td style="font-weight: 700;">${item.name}</td>
+        <td style="color: #38bdf8; font-weight: 700;">Câu ${item.q}/15</td>
+        <td style="color: #34d399; font-weight: 800;">${item.prize}</td>
+        <td style="font-size: 0.85rem; color: #94a3b8;">${item.date}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('leaderboardModal').style.display = 'flex';
+}
+
+function resetLeaderboard() {
+  if (confirm("Thầy/Cô có chắc chắn muốn XÓA TOÀN BỘ Bảng xếp hạng không? (Thao tác này phù hợp khi chuyển sang lớp học mới).")) {
+    localStorage.removeItem('altp_leaderboard');
+    openLeaderboardModal();
+  }
+}
+
+// ── ON LOAD: MỞ BẢNG CHUẨN BỊ (NẠP CÂU HỎI TRƯỚC -> GHI TÊN SAU) ──
+window.onload = () => {
+  initLadder();
+  // Default to Preset 2 (Bài 6 Tiết 1)
+  questionBank = parseRobustQuestions(questionsPreset2);
+  openSetupModal();
+};
+</script>
+
+</body>
+</html>
