@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Tương Tác Hóa Học 10 - Quy Luật Tuần Hoàn</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Be Vietnam Pro & Merriweather / Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+            --font-serif: 'Merriweather', 'Georgia', serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 45%, #f0fdf4 100%);
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            color: #0f172a;
+        }
+
+        /* Hiệu ứng kính mờ hiện đại */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Thiết kế thẻ Nguyên tố chuẩn PDF */
+        .element-card {
+            position: relative;
+            border-width: 2.5px;
+            border-style: solid;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+            background-clip: padding-box;
+        }
+
+        .element-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 12px 20px -4px rgba(15, 23, 42, 0.14);
+            z-index: 15;
+        }
+
+        .element-card:active, .element-card.dragging {
+            cursor: grabbing;
+            transform: scale(1.06);
+            z-index: 50;
+        }
+
+        .element-card.selected-card {
+            outline: 3px solid #4f46e5;
+            outline-offset: 2px;
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.22);
+        }
+
+        .element-card .atomic-num {
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .element-card .symbol {
+            font-family: var(--font-serif);
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        .element-card .name {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            color: #334155;
+            line-height: 1.1;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Kích thước thẻ trong Kho bên phải */
+        .card-size-sidebar {
+            width: 100%;
+            height: 80px;
+            padding: 6px 4px 4px 4px;
+        }
+        .card-size-sidebar .atomic-num { font-size: 11px; }
+        .card-size-sidebar .symbol { font-size: 25px; margin-top: 4px; }
+        .card-size-sidebar .name { font-size: 11px; margin-top: 3px; }
+
+        /* Kích thước thẻ khi nằm trong Ô trả lời */
+        .card-size-slot {
+            width: 100%;
+            height: 100%;
+            padding: 4px 2px 2px 2px;
+            border-radius: 11px;
+        }
+        .card-size-slot .atomic-num { font-size: 10px; top: 4px; left: 6px; }
+        .card-size-slot .symbol { font-size: 21px; margin-top: 2px; }
+        .card-size-slot .name { font-size: 10px; margin-top: 2px; }
+
+        /* Thiết kế Thẻ Nhóm Nguyên Tử chuẩn PDF */
+        .group-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 2.5px solid #475569;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+            position: relative;
+        }
+
+        .group-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            border-color: #1e293b;
+            box-shadow: 0 12px 20px -4px rgba(15, 23, 42, 0.14);
+            z-index: 15;
+        }
+
+        .group-card.selected-card {
+            outline: 3px solid #4f46e5;
+            outline-offset: 2px;
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.22);
+        }
+
+        .group-card .group-symbol {
+            font-family: var(--font-serif);
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        /* Ô trống thả thẻ (Dropzone) */
+        .drop-slot {
+            border: 2.5px dashed #94a3b8;
+            border-radius: 14px;
+            background-color: rgba(248, 250, 252, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .drop-slot:hover {
+            border-color: #4f46e5;
+            background-color: rgba(238, 242, 255, 0.9);
+        }
+
+        .drop-slot.drag-over {
+            border-color: #4f46e5;
+            border-style: solid;
+            background-color: #e0e7ff;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.22);
+        }
+
+        .drop-slot.slot-active-target {
+            border-color: #4f46e5;
+            border-style: solid;
+            background-color: #eef2ff;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.22);
+        }
+
+        /* Trạng thái đúng / sai sau khi bấm Hoàn thành */
+        .drop-slot.slot-correct {
+            border: 3px solid #16a34a !important;
+            background-color: #dcfce7 !important;
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
+        }
+
+        .drop-slot.slot-wrong {
+            border: 3px solid #dc2626 !important;
+            background-color: #fee2e2 !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18);
+            animation: shake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(3px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+            40%, 60% { transform: translate3d(5px, 0, 0); }
+        }
+
+        /* Nút xóa nhanh trên thẻ đã đặt */
+        .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 9999px;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.15s ease;
+            z-index: 25;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        }
+
+        .drop-slot:hover .remove-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Huy hiệu Đúng/Sai trên góc ô */
+        .status-badge {
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: white;
+            z-index: 20;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Thanh cuộn tinh tế */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Ghost card khi kéo trên màn hình cảm ứng */
+        #touch-drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: 96px;
+            height: 76px;
+            transform: translate(-50%, -50%) scale(1.08);
+            box-shadow: 0 18px 32px rgba(0,0,0,0.25);
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Canvas bắn pháo giấy chúc mừng -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Ghost element hỗ trợ kéo thả trên màn hình cảm ứng -->
+    <div id="touch-drag-ghost"></div>
+
+    <!-- HEADER HIỆN ĐẠI -->
+    <header class="glass-panel border-b border-slate-200/80 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- Thương hiệu / Tiêu đề -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-atom text-xl animate-spin" style="animation-duration: 14s;"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                            HÓA HỌC 10 • QUY LUẬT TUẦN HOÀN
+                        </h1>
+                        <span class="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            Kéo thả tương tác
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">
+                        Kéo thẻ từ kho bên phải thả vào ô trống bên trái (hoặc chạm chọn thẻ rồi chạm vào ô)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Thanh chuyển đổi 3 Câu hỏi (Tabs) -->
+            <div class="flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner">
+                <button onclick="switchQuestion(1)" id="tab-q1" class="q-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm">
+                    <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">1</span>
+                    <span>Câu 1: Bán kính</span>
+                    <span id="badge-q1" class="hidden text-emerald-300"><i class="fa-solid fa-circle-check"></i></span>
+                </button>
+                <button onclick="switchQuestion(2)" id="tab-q2" class="q-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 text-slate-600 hover:bg-white/70">
+                    <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs">2</span>
+                    <span>Câu 2: Độ âm điện</span>
+                    <span id="badge-q2" class="hidden text-emerald-500"><i class="fa-solid fa-circle-check"></i></span>
+                </button>
+                <button onclick="switchQuestion(3)" id="tab-q3" class="q-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 text-slate-600 hover:bg-white/70">
+                    <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs">3</span>
+                    <span>Câu 3: Hydroxide</span>
+                    <span id="badge-q3" class="hidden text-emerald-500"><i class="fa-solid fa-circle-check"></i></span>
+                </button>
+            </div>
+
+            <!-- Nút Bật/Tắt Âm thanh -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSound()" id="sound-btn" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold flex items-center gap-2 transition-colors border border-slate-200/80" title="Bật/Tắt âm thanh">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-indigo-600 text-sm"></i>
+                    <span class="hidden sm:inline" id="sound-label">Âm thanh: Bật</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- BỐ CỤC CHÍNH 2 CỘT: BÊN TRÁI (62%) CÂU HỎI & BÀN CHƠI - BÊN PHẢI (38%) KHO THẺ NGẪU NHIÊN -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- CỘT TRÁI (7/12 ~ 60%): ĐỀ BÀI, BÀN CHƠI KÉO THẢ & KẾT QUẢ -->
+        <section class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+
+            <!-- KHUNG ĐỀ BÀI (CHỈ HIỂN THỊ CÂU HỎI, KHÔNG CÓ GỢI Ý DƯỚI CÂU HỎI) -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-600 to-cyan-500"></div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span id="question-badge-title" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <i class="fa-solid fa-bolt text-indigo-500"></i>
+                        CÂU HỎI 1 / 3
+                    </span>
+                    <span id="progress-counter" class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                        Đã điền: 0/14 ô
+                    </span>
+                </div>
+                <h2 id="question-title" class="text-base sm:text-lg md:text-xl font-extrabold text-slate-900 leading-relaxed">
+                    Câu 1: Sắp xếp các nguyên tử trong cùng một chu kỳ theo chiều tăng dần của bán kính nguyên tử.
+                </h2>
+            </div>
+
+            <!-- KHU VỰC BÀN CHƠI KÉO THẢ -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col gap-5">
+
+                <!-- Thanh trạng thái tương tác -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 text-xs text-slate-500">
+                    <div id="active-selection-banner" class="flex items-center gap-2 font-medium">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span>Kéo thả thẻ từ bên phải vào ô trống hoặc chạm vào thẻ rồi chạm vào ô cần đặt.</span>
+                    </div>
+                </div>
+
+                <!-- ==================== BÀN CHƠI CÂU 1 ==================== -->
+                <div id="board-q1" class="flex flex-col gap-6">
+                    <!-- Hàng 1 -->
+                    <div class="bg-gradient-to-r from-rose-50/70 via-slate-50/60 to-amber-50/70 rounded-2xl p-4 border border-slate-200/90 shadow-inner">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+                            <span class="px-3.5 py-1 rounded-xl bg-rose-600 text-white text-xs font-extrabold tracking-wide shadow-sm">
+                                HÀNG 1
+                            </span>
+                            <div class="flex items-center gap-2 text-xs font-bold text-rose-700 bg-white px-3 py-1 rounded-xl border border-rose-200 shadow-sm">
+                                <span>Bán kính nhỏ</span>
+                                <i class="fa-solid fa-arrow-right-long"></i>
+                                <span>Bán kính lớn</span>
+                            </div>
+                        </div>
+                        <div id="q1-row1-slots" class="grid grid-cols-4 sm:grid-cols-7 gap-2.5 items-center">
+                            <!-- Render bằng JS -->
+                        </div>
+                    </div>
+
+                    <!-- Hàng 2 -->
+                    <div class="bg-gradient-to-r from-blue-50/70 via-slate-50/60 to-emerald-50/70 rounded-2xl p-4 border border-slate-200/90 shadow-inner">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+                            <span class="px-3.5 py-1 rounded-xl bg-blue-600 text-white text-xs font-extrabold tracking-wide shadow-sm">
+                                HÀNG 2
+                            </span>
+                            <div class="flex items-center gap-2 text-xs font-bold text-blue-700 bg-white px-3 py-1 rounded-xl border border-blue-200 shadow-sm">
+                                <span>Bán kính nhỏ</span>
+                                <i class="fa-solid fa-arrow-right-long"></i>
+                                <span>Bán kính lớn</span>
+                            </div>
+                        </div>
+                        <div id="q1-row2-slots" class="grid grid-cols-4 sm:grid-cols-7 gap-2.5 items-center">
+                            <!-- Render bằng JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== BÀN CHƠI CÂU 2 ==================== -->
+                <div id="board-q2" class="hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Cột Nhóm IA -->
+                        <div class="bg-gradient-to-b from-rose-50/80 to-slate-50/90 rounded-2xl p-4 border border-rose-200/90 flex flex-col items-center shadow-inner">
+                            <div class="w-full flex items-center justify-between mb-3">
+                                <span class="px-3.5 py-1 rounded-xl bg-rose-600 text-white text-xs font-extrabold shadow-sm">
+                                    NHÓM IA
+                                </span>
+                                <span class="text-[11px] font-bold text-rose-700 bg-white px-2.5 py-1 rounded-lg border border-rose-200">
+                                    Giảm dần ↓
+                                </span>
+                            </div>
+                            <div id="q2-col1-slots" class="flex flex-col items-center gap-2 w-full max-w-[145px]">
+                                <!-- Render bằng JS -->
+                            </div>
+                        </div>
+
+                        <!-- Cột Nhóm IIA -->
+                        <div class="bg-gradient-to-b from-emerald-50/80 to-slate-50/90 rounded-2xl p-4 border border-emerald-200/90 flex flex-col items-center shadow-inner">
+                            <div class="w-full flex items-center justify-between mb-3">
+                                <span class="px-3.5 py-1 rounded-xl bg-emerald-600 text-white text-xs font-extrabold shadow-sm">
+                                    NHÓM IIA
+                                </span>
+                                <span class="text-[11px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200">
+                                    Giảm dần ↓
+                                </span>
+                            </div>
+                            <div id="q2-col2-slots" class="flex flex-col items-center gap-2 w-full max-w-[145px]">
+                                <!-- Render bằng JS -->
+                            </div>
+                        </div>
+
+                        <!-- Cột Nhóm VIIA -->
+                        <div class="bg-gradient-to-b from-purple-50/80 to-slate-50/90 rounded-2xl p-4 border border-purple-200/90 flex flex-col items-center shadow-inner">
+                            <div class="w-full flex items-center justify-between mb-3">
+                                <span class="px-3.5 py-1 rounded-xl bg-purple-600 text-white text-xs font-extrabold shadow-sm">
+                                    NHÓM VIIA
+                                </span>
+                                <span class="text-[11px] font-bold text-purple-700 bg-white px-2.5 py-1 rounded-lg border border-purple-200">
+                                    Giảm dần ↓
+                                </span>
+                            </div>
+                            <div id="q2-col3-slots" class="flex flex-col items-center gap-2 w-full max-w-[145px]">
+                                <!-- Render bằng JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== BÀN CHƠI CÂU 3 (7 HỢP CHẤT) ==================== -->
+                <div id="board-q3" class="hidden flex-col gap-4">
+                    <!-- Thanh mũi tên xu hướng -->
+                    <div class="w-full rounded-2xl px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-600 text-white flex flex-wrap items-center justify-between gap-2 shadow-sm">
+                        <div class="flex items-center gap-2 text-xs font-bold">
+                            <span class="px-2 py-0.5 rounded-md bg-white/20">Vị trí 1</span>
+                            <span>Tính Base mạnh nhất</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm font-extrabold tracking-wide">
+                            <span>CHIỀU GIẢM DẦN TÍNH BASE • TĂNG DẦN TÍNH ACID</span>
+                            <i class="fa-solid fa-angles-right"></i>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold">
+                            <span>Tính Acid mạnh nhất</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/20">Vị trí 7</span>
+                        </div>
+                    </div>
+
+                    <!-- Lưới 7 cụm hợp chất (mỗi cụm 2 ô cùng hàng cạnh nhau) -->
+                    <div id="q3-compounds-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                        <!-- Render bằng JS -->
+                    </div>
+                </div>
+
+                <!-- THANH NÚT ĐIỀU KHIỂN DƯỚI BÀN CHƠI -->
+                <div class="pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                    <button onclick="resetCurrentQuestion()" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 border border-slate-200">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Làm lại câu này</span>
+                    </button>
+
+                    <button onclick="checkCurrentQuestion()" id="btn-submit" class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all transform hover:-translate-y-0.5 flex items-center gap-2.5">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                        <span>HOÀN THÀNH</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KHUNG KẾT QUẢ, GIẢI THÍCH & PHÂN TÍCH LỖI SAI (CHỈ HIỆN SAU KHI BẤM HOÀN THÀNH) -->
+            <div id="feedback-panel" class="hidden rounded-3xl border p-5 sm:p-6 shadow-md transition-all"></div>
+
+        </section>
+
+        <!-- CỘT PHẢI (5/12 ~ 40%): KHO THẺ NGUYÊN TỐ & NHÓM NGUYÊN TỬ (XÁO TRỘN NGẪU NHIÊN, KHÔNG BIẾN MẤT) -->
+        <aside class="lg:col-span-5 xl:col-span-4 bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-5 lg:sticky lg:top-20 flex flex-col max-h-[calc(100vh-6rem)]">
+            <!-- Đầu kho thẻ -->
+            <div class="flex flex-col gap-3 pb-3.5 mb-3.5 border-b border-slate-200">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold border border-indigo-100">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+                                KHO THẺ HÓA HỌC
+                            </h3>
+                            <p class="text-[11px] text-slate-500">
+                                Sắp xếp ngẫu nhiên • Kéo thả không giới hạn
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Nút Xáo trộn ngẫu nhiên -->
+                    <button onclick="shuffleAllCards(true)" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 border border-indigo-200 transition-all active:scale-95" title="Xáo trộn ngẫu nhiên vị trí các thẻ">
+                        <i class="fa-solid fa-shuffle"></i>
+                        <span>Xáo trộn</span>
+                    </button>
+                </div>
+
+                <!-- Thanh lọc loại thẻ -->
+                <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                    <button onclick="setSidebarFilter('all')" id="filter-all" class="py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm transition-all">
+                        Tất cả (30)
+                    </button>
+                    <button onclick="setSidebarFilter('elements')" id="filter-elements" class="py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                        20 Nguyên tố
+                    </button>
+                    <button onclick="setSidebarFilter('groups')" id="filter-groups" class="py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                        10 Nhóm NT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Danh sách cuộn chứa các thẻ đã xáo trộn -->
+            <div class="overflow-y-auto pr-1 space-y-5 flex-1">
+
+                <!-- PHẦN 1: 20 THẺ NGUYÊN TỐ (XÁO TRỘN NGẪU NHIÊN) -->
+                <div id="sidebar-elements-section">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            Thẻ Nguyên Tố (20 thẻ)
+                        </span>
+                        <span class="text-[11px] text-slate-400 font-medium">Thứ tự ngẫu nhiên</span>
+                    </div>
+                    <div id="elements-deck-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2.5">
+                        <!-- Render bằng JS -->
+                    </div>
+                </div>
+
+                <!-- PHẦN 2: 10 THẺ NHÓM NGUYÊN TỬ (XÁO TRỘN NGẪU NHIÊN) -->
+                <div id="sidebar-groups-section" class="pt-3 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                            Thẻ Nhóm Nguyên Tử (10 thẻ)
+                        </span>
+                        <span class="text-[11px] text-slate-400 font-medium">Thứ tự ngẫu nhiên</span>
+                    </div>
+                    <div id="groups-deck-grid" class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-2 gap-2.5">
+                        <!-- Render bằng JS -->
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        /**************************************************************************
+         * 1. DỮ LIỆU 20 NGUYÊN TỐ & 10 NHÓM NGUYÊN TỬ CHUẨN MÀU SẮC FILE PDF
+         **************************************************************************/
+        const ELEMENTS_DATA = [
+            // Hàng 1 trang 1 PDF: Hồng pastel & Cam kem
+            { z: 1,  symbol: 'H',  name: 'Hydrogen',   period: 1, group: 'IA',    radius: 53,  en: 2.20, bg: '#fde2e4', border: '#f07167' },
+            { z: 2,  symbol: 'He', name: 'Helium',     period: 1, group: 'VIIIA', radius: 31,  en: null, bg: '#fff1e6', border: '#f4a261' },
+            // Hàng 2 trang 1 PDF: Vàng pastel & Xanh lá pastel
+            { z: 3,  symbol: 'Li', name: 'Lithium',    period: 2, group: 'IA',    radius: 167, en: 0.98, bg: '#fef9c3', border: '#eab308' },
+            { z: 4,  symbol: 'Be', name: 'Beryllium',  period: 2, group: 'IIA',   radius: 112, en: 1.57, bg: '#dcfce7', border: '#22c55e' },
+            // Hàng 3 trang 1 PDF: Xanh ngọc & Xanh dương nhạt
+            { z: 5,  symbol: 'B',  name: 'Boron',      period: 2, group: 'IIIA',  radius: 87,  en: 2.04, bg: '#ccfbf1', border: '#14b8a6' },
+            { z: 6,  symbol: 'C',  name: 'Carbon',     period: 2, group: 'IVA',   radius: 67,  en: 2.55, bg: '#e0f2fe', border: '#0ea5e9' },
+            // Hàng 4 trang 1 PDF: Xanh lam & Tím lavender
+            { z: 7,  symbol: 'N',  name: 'Nitrogen',   period: 2, group: 'VA',    radius: 56,  en: 3.04, bg: '#dbeafe', border: '#3b82f6' },
+            { z: 8,  symbol: 'O',  name: 'Oxygen',     period: 2, group: 'VIA',   radius: 48,  en: 3.44, bg: '#ede9fe', border: '#8b5cf6' },
+            // Hàng 5 trang 1 PDF: Hồng phấn & Tím nhạt
+            { z: 9,  symbol: 'F',  name: 'Fluorine',   period: 2, group: 'VIIA',  radius: 42,  en: 3.98, bg: '#fce7f3', border: '#ec4899' },
+            { z: 10, symbol: 'Ne', name: 'Neon',       period: 2, group: 'VIIIA', radius: 38,  en: null, bg: '#f3e8ff', border: '#a855f7' },
+
+            // Hàng 1 trang 2 PDF: Hồng pastel & Cam kem
+            { z: 11, symbol: 'Na', name: 'Sodium',     period: 3, group: 'IA',    radius: 190, en: 0.93, bg: '#fde2e4', border: '#f07167' },
+            { z: 12, symbol: 'Mg', name: 'Magnesium',  period: 3, group: 'IIA',   radius: 145, en: 1.31, bg: '#fff1e6', border: '#f4a261' },
+            // Hàng 2 trang 2 PDF: Vàng pastel & Xanh lá pastel
+            { z: 13, symbol: 'Al', name: 'Aluminium',  period: 3, group: 'IIIA',  radius: 118, en: 1.61, bg: '#fef9c3', border: '#eab308' },
+            { z: 14, symbol: 'Si', name: 'Silicon',    period: 3, group: 'IVA',   radius: 111, en: 1.90, bg: '#dcfce7', border: '#22c55e' },
+            // Hàng 3 trang 2 PDF: Xanh ngọc & Xanh dương nhạt
+            { z: 15, symbol: 'P',  name: 'Phosphorus', period: 3, group: 'VA',    radius: 98,  en: 2.19, bg: '#ccfbf1', border: '#14b8a6' },
+            { z: 16, symbol: 'S',  name: 'Sulfur',     period: 3, group: 'VIA',   radius: 88,  en: 2.58, bg: '#e0f2fe', border: '#0ea5e9' },
+            // Hàng 4 trang 2 PDF: Xanh lam & Tím lavender
+            { z: 17, symbol: 'Cl', name: 'Chlorine',   period: 3, group: 'VIIA',  radius: 79,  en: 3.16, bg: '#dbeafe', border: '#3b82f6' },
+            { z: 18, symbol: 'Ar', name: 'Argon',      period: 3, group: 'VIIIA', radius: 71,  en: null, bg: '#ede9fe', border: '#8b5cf6' },
+            // Hàng 5 trang 2 PDF: Hồng phấn & Tím nhạt
+            { z: 19, symbol: 'K',  name: 'Potassium',  period: 4, group: 'IA',    radius: 243, en: 0.82, bg: '#fce7f3', border: '#ec4899' },
+            { z: 20, symbol: 'Ca', name: 'Calcium',    period: 4, group: 'IIA',   radius: 194, en: 1.00, bg: '#f3e8ff', border: '#a855f7' }
+        ];
+
+        // 10 Thẻ nhóm nguyên tử từ file PDF
+        const GROUPS_DATA = [
+            { id: 'G_OH',   code: 'OH',    html: 'OH' },
+            { id: 'G_OH2',  code: '(OH)2', html: '(OH)<sub>2</sub>' },
+            { id: 'G_OH3',  code: '(OH)3', html: '(OH)<sub>3</sub>' },
+            { id: 'G_H',    code: 'H',     html: 'H' },
+            { id: 'G_H2',   code: 'H2',    html: 'H<sub>2</sub>' },
+            { id: 'G_H3',   code: 'H3',    html: 'H<sub>3</sub>' },
+            { id: 'G_PO4',  code: 'PO4',   html: 'PO<sub>4</sub>' },
+            { id: 'G_SO4',  code: 'SO4',   html: 'SO<sub>4</sub>' },
+            { id: 'G_SiO3', code: 'SiO3',  html: 'SiO<sub>3</sub>' },
+            { id: 'G_ClO4', code: 'ClO4',  html: 'ClO<sub>4</sub>' }
+        ];
+
+        // Đáp án chuẩn 7 hợp chất ở Câu 3
+        const Q3_TARGETS = [
+            { left: ['EL_Na'], right: ['G_OH'],   formula: 'NaOH',                         type: 'Base mạnh (Kiềm)' },
+            { left: ['EL_Mg'], right: ['G_OH2'],  formula: 'Mg(OH)<sub>2</sub>',            type: 'Base yếu' },
+            { left: ['EL_Al'], right: ['G_OH3'],  formula: 'Al(OH)<sub>3</sub>',            type: 'Hydroxide lưỡng tính' },
+            { left: ['G_H2'],  right: ['G_SiO3'], formula: 'H<sub>2</sub>SiO<sub>3</sub>',  type: 'Acid rất yếu' },
+            { left: ['G_H3'],  right: ['G_PO4'],  formula: 'H<sub>3</sub>PO<sub>4</sub>',   type: 'Acid trung bình' },
+            { left: ['G_H2'],  right: ['G_SO4'],  formula: 'H<sub>2</sub>SO<sub>4</sub>',   type: 'Acid mạnh' },
+            { left: ['G_H'],   right: ['G_ClO4'], formula: 'HClO<sub>4</sub>',              type: 'Acid rất mạnh' }
+        ];
+
+        /**************************************************************************
+         * 2. TRẠNG THÁI TRÒ CHƠI & MẢNG THẺ XÁO TRỘN NGẪU NHIÊN
+         **************************************************************************/
+        let currentQuestion = 1;
+        let soundEnabled = true;
+        let sidebarFilter = 'all';
+
+        let selectedCardToken = null;
+        let selectedSlotKey = null;
+
+        // Danh sách thẻ hiển thị ở kho bên phải (được xáo trộn ngẫu nhiên)
+        let shuffledElements = [...ELEMENTS_DATA];
+        let shuffledGroups = [...GROUPS_DATA];
+
+        const boardState = {
+            q1: {
+                row1: Array(7).fill(null),
+                row2: Array(7).fill(null)
+            },
+            q2: {
+                col1: Array(4).fill(null), // Nhóm IA (hỗ trợ cả 3 kim loại kiềm Li>Na>K hoặc 4 nguyên tố H>Li>Na>K)
+                col2: Array(3).fill(null), // Nhóm IIA: Be > Mg > Ca
+                col3: Array(2).fill(null)  // Nhóm VIIA: F > Cl
+            },
+            q3: {
+                pairs: Array.from({ length: 7 }, () => [null, null])
+            }
+        };
+
+        // Thuật toán xáo trộn Fisher-Yates
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function shuffleAllCards(playAudio = false) {
+            shuffledElements = shuffleArray(ELEMENTS_DATA);
+            shuffledGroups = shuffleArray(GROUPS_DATA);
+            if (playAudio) playPopSound();
+            renderSidebar();
+        }
+
+        /**************************************************************************
+         * 3. HỆ THỐNG ÂM THANH (WEB AUDIO API)
+         **************************************************************************/
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playPopSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.09);
+            } catch (e) {}
+        }
+
+        function playCelebrationSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const notes = [
+                    { freq: 523.25, start: 0.00, dur: 0.14 },
+                    { freq: 659.25, start: 0.13, dur: 0.14 },
+                    { freq: 783.99, start: 0.26, dur: 0.14 },
+                    { freq: 1046.50, start: 0.40, dur: 0.26 },
+                    { freq: 783.99, start: 0.68, dur: 0.14 },
+                    { freq: 1046.50, start: 0.84, dur: 0.50 }
+                ];
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.start);
+                    gain.gain.setValueAtTime(0.22, ctx.currentTime + n.start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.start + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.start);
+                    osc.stop(ctx.currentTime + n.start + n.dur);
+                });
+            } catch (e) {}
+        }
+
+        function playWrongSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const notes = [
+                    { freq: 300, start: 0.0, dur: 0.18 },
+                    { freq: 230, start: 0.2, dur: 0.32 }
+                ];
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.start);
+                    gain.gain.setValueAtTime(0.11, ctx.currentTime + n.start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.start + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.start);
+                    osc.stop(ctx.currentTime + n.start + n.dur);
+                });
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            const label = document.getElementById('sound-label');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-indigo-600 text-sm';
+                if (label) label.textContent = 'Âm thanh: Bật';
+                playPopSound();
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400 text-sm';
+                if (label) label.textContent = 'Âm thanh: Tắt';
+            }
+        }
+
+        /**************************************************************************
+         * 4. HIỆU ỨNG PHÁO GIẤY CHÚC MỪNG (CONFETTI)
+         **************************************************************************/
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const colors = ['#f07167', '#f4a261', '#eab308', '#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6', '#8b5cf6', '#ec4899'];
+            const pieces = Array.from({ length: 120 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                w: Math.random() * 10 + 6,
+                h: Math.random() * 6 + 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vy: Math.random() * 4 + 2.5,
+                vx: (Math.random() - 0.5) * 3,
+                angle: Math.random() * 360,
+                vAngle: (Math.random() - 0.5) * 8
+            }));
+
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    p.angle += p.vAngle;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.angle * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < 165) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            animate();
+        }
+
+        /**************************************************************************
+         * 5. RENDER THẺ & KHO THẺ BÊN PHẢI (KHÔNG BIẾN MẤT KHI KÉO THẢ)
+         **************************************************************************/
+        function getCardDataByToken(token) {
+            if (!token) return null;
+            if (token.startsWith('EL_')) {
+                const sym = token.replace('EL_', '');
+                const el = ELEMENTS_DATA.find(e => e.symbol === sym);
+                return el ? { type: 'element', token, ...el } : null;
+            }
+            if (token.startsWith('G_')) {
+                const grp = GROUPS_DATA.find(g => g.id === token);
+                return grp ? { type: 'group', token, ...grp } : null;
+            }
+            return null;
+        }
+
+        // Tạo HTML cho thẻ (ở kho bên phải thẻ luôn hiển thị 100% độ nét, không bị mờ hay biến mất)
+        function createCardHTML(token, inSlot = false) {
+            const data = getCardDataByToken(token);
+            if (!data) return '';
+
+            const sizeClass = inSlot ? 'card-size-slot' : 'card-size-sidebar';
+            const isSelected = (!inSlot && selectedCardToken === token) ? 'selected-card' : '';
+
+            if (data.type === 'element') {
+                return `
+                    <div class="element-card ${sizeClass} ${isSelected}"
+                         style="background-color: ${data.bg}; border-color: ${data.border};"
+                         draggable="true"
+                         data-token="${token}"
+                         onclick="handleCardClick(event, '${token}', ${inSlot})"
+                         ondragstart="handleDragStart(event, '${token}')"
+                         ontouchstart="handleTouchStart(event, '${token}')">
+                        <span class="atomic-num">${data.z}</span>
+                        <span class="symbol">${data.symbol}</span>
+                        <span class="name">${data.name}</span>
+                    </div>
+                `;
+            } else {
+                const fontSize = inSlot ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl';
+                return `
+                    <div class="group-card ${sizeClass} ${isSelected}"
+                         draggable="true"
+                         data-token="${token}"
+                         onclick="handleCardClick(event, '${token}', ${inSlot})"
+                         ondragstart="handleDragStart(event, '${token}')"
+                         ontouchstart="handleTouchStart(event, '${token}')">
+                        <span class="group-symbol ${fontSize}">${data.html}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSidebar() {
+            const elGrid = document.getElementById('elements-deck-grid');
+            const grpGrid = document.getElementById('groups-deck-grid');
+
+            elGrid.innerHTML = shuffledElements.map(el => createCardHTML(`EL_${el.symbol}`, false)).join('');
+            grpGrid.innerHTML = shuffledGroups.map(g => createCardHTML(g.id, false)).join('');
+
+            const elSection = document.getElementById('sidebar-elements-section');
+            const grpSection = document.getElementById('sidebar-groups-section');
+
+            if (sidebarFilter === 'all') {
+                elSection.classList.remove('hidden');
+                grpSection.classList.remove('hidden');
+            } else if (sidebarFilter === 'elements') {
+                elSection.classList.remove('hidden');
+                grpSection.classList.add('hidden');
+            } else if (sidebarFilter === 'groups') {
+                elSection.classList.add('hidden');
+                grpSection.classList.remove('hidden');
+            }
+        }
+
+        function setSidebarFilter(filter) {
+            sidebarFilter = filter;
+            ['all', 'elements', 'groups'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = 'py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm transition-all';
+                } else {
+                    btn.className = 'py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+                }
+            });
+            renderSidebar();
+        }
+
+        /**************************************************************************
+         * 6. RENDER BÀN CHƠI CHO 3 CÂU HỎI
+         **************************************************************************/
+        function createSlotHTML(slotKey, token, placeholderText, heightClass = 'h-[78px]') {
+            const isTargetSelected = (selectedSlotKey === slotKey) ? 'slot-active-target' : '';
+            const innerContent = token
+                ? `
+                    ${createCardHTML(token, true)}
+                    <button type="button" onclick="removeCardFromSlot(event, '${slotKey}')" class="remove-btn" title="Xóa thẻ khỏi ô này">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  `
+                : `<span class="text-[11px] font-semibold text-slate-400 text-center px-1 pointer-events-none">${placeholderText}</span>`;
+
+            return `
+                <div id="slot-${slotKey}"
+                     data-slot-key="${slotKey}"
+                     class="drop-slot w-full ${heightClass} ${isTargetSelected}"
+                     onclick="handleSlotClick(event, '${slotKey}')"
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, '${slotKey}')">
+                    ${innerContent}
+                </div>
+            `;
+        }
+
+        function renderBoard() {
+            // CÂU 1
+            if (currentQuestion === 1) {
+                const row1Container = document.getElementById('q1-row1-slots');
+                const row2Container = document.getElementById('q1-row2-slots');
+
+                row1Container.innerHTML = boardState.q1.row1.map((token, idx) => `
+                    <div class="flex items-center gap-1.5">
+                        <div class="flex-1">
+                            ${createSlotHTML(`q1_row1_${idx}`, token, `Ô ${idx + 1}`, 'h-[78px]')}
+                        </div>
+                        ${idx < 6 ? '<span class="text-sm sm:text-base font-extrabold text-rose-600 select-none">&lt;</span>' : ''}
+                    </div>
+                `).join('');
+
+                row2Container.innerHTML = boardState.q1.row2.map((token, idx) => `
+                    <div class="flex items-center gap-1.5">
+                        <div class="flex-1">
+                            ${createSlotHTML(`q1_row2_${idx}`, token, `Ô ${idx + 1}`, 'h-[78px]')}
+                        </div>
+                        ${idx < 6 ? '<span class="text-sm sm:text-base font-extrabold text-blue-600 select-none">&lt;</span>' : ''}
+                    </div>
+                `).join('');
+            }
+
+            // CÂU 2
+            if (currentQuestion === 2) {
+                const col1Container = document.getElementById('q2-col1-slots');
+                const col2Container = document.getElementById('q2-col2-slots');
+                const col3Container = document.getElementById('q2-col3-slots');
+
+                col1Container.innerHTML = boardState.q2.col1.map((token, idx) => `
+                    <div class="w-full flex flex-col items-center gap-1.5">
+                        ${createSlotHTML(`q2_col1_${idx}`, token, `Ô ${idx + 1}`, 'h-[78px]')}
+                        ${idx < 3 ? '<span class="text-sm font-extrabold text-rose-600 rotate-90 select-none">&gt;</span>' : ''}
+                    </div>
+                `).join('');
+
+                col2Container.innerHTML = boardState.q2.col2.map((token, idx) => `
+                    <div class="w-full flex flex-col items-center gap-1.5">
+                        ${createSlotHTML(`q2_col2_${idx}`, token, `Ô ${idx + 1}`, 'h-[78px]')}
+                        ${idx < 2 ? '<span class="text-sm font-extrabold text-emerald-600 rotate-90 select-none">&gt;</span>' : ''}
+                    </div>
+                `).join('');
+
+                col3Container.innerHTML = boardState.q2.col3.map((token, idx) => `
+                    <div class="w-full flex flex-col items-center gap-1.5">
+                        ${createSlotHTML(`q2_col3_${idx}`, token, `Ô ${idx + 1}`, 'h-[78px]')}
+                        ${idx < 1 ? '<span class="text-sm font-extrabold text-purple-600 rotate-90 select-none">&gt;</span>' : ''}
+                    </div>
+                `).join('');
+            }
+
+            // CÂU 3 (7 HỢP CHẤT, MỖI HỢP CHẤT 2 Ô CẠNH NHAU CÙNG HÀNG)
+            if (currentQuestion === 3) {
+                const container = document.getElementById('q3-compounds-container');
+
+                container.innerHTML = Q3_TARGETS.map((target, idx) => {
+                    const leftToken = boardState.q3.pairs[idx][0];
+                    const rightToken = boardState.q3.pairs[idx][1];
+                    const previewFormula = buildCompoundPreview(leftToken, rightToken);
+
+                    return `
+                        <div class="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/90 flex flex-col justify-between gap-2.5 shadow-inner">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white text-xs font-extrabold">
+                                    Hợp chất ${idx + 1}
+                                </span>
+                                <span class="text-xs font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-md border border-indigo-100">
+                                    ${previewFormula || '...'}
+                                </span>
+                            </div>
+
+                            <!-- 2 thẻ cùng hàng cạnh nhau tạo thành 1 đáp án -->
+                            <div class="grid grid-cols-2 gap-2 items-center">
+                                ${createSlotHTML(`q3_pair_${idx}_0`, leftToken, 'Thẻ 1', 'h-[76px]')}
+                                ${createSlotHTML(`q3_pair_${idx}_1`, rightToken, 'Thẻ 2', 'h-[76px]')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateProgressCounter();
+            renderSidebar();
+        }
+
+        function buildCompoundPreview(leftToken, rightToken) {
+            if (!leftToken && !rightToken) return '';
+            const leftData = getCardDataByToken(leftToken);
+            const rightData = getCardDataByToken(rightToken);
+            const leftStr = leftData ? (leftData.type === 'element' ? leftData.symbol : leftData.html) : '?';
+            const rightStr = rightData ? (rightData.type === 'element' ? rightData.symbol : rightData.html) : '?';
+            return `${leftStr}${rightStr}`;
+        }
+
+        function updateProgressCounter() {
+            const counterEl = document.getElementById('progress-counter');
+            let filled = 0;
+            let total = 0;
+
+            if (currentQuestion === 1) {
+                total = 14;
+                filled = boardState.q1.row1.filter(Boolean).length + boardState.q1.row2.filter(Boolean).length;
+            } else if (currentQuestion === 2) {
+                total = 9;
+                filled = boardState.q2.col1.filter(Boolean).length +
+                         boardState.q2.col2.filter(Boolean).length +
+                         boardState.q2.col3.filter(Boolean).length;
+            } else if (currentQuestion === 3) {
+                total = 14;
+                for (let i = 0; i < 7; i++) {
+                    if (boardState.q3.pairs[i][0]) filled++;
+                    if (boardState.q3.pairs[i][1]) filled++;
+                }
+            }
+            counterEl.textContent = `Đã điền: ${filled}/${total} ô`;
+        }
+
+        /**************************************************************************
+         * 7. ĐỌC / GHI Ô TRẢ LỜI (KHÔNG LÀM MẤT THẺ Ở KHO BÊN PHẢI)
+         **************************************************************************/
+        function getSlotValue(slotKey) {
+            const parts = slotKey.split('_');
+            if (parts[0] === 'q1') return boardState.q1[parts[1]][parseInt(parts[2], 10)];
+            if (parts[0] === 'q2') return boardState.q2[parts[1]][parseInt(parts[2], 10)];
+            if (parts[0] === 'q3') return boardState.q3.pairs[parseInt(parts[2], 10)][parseInt(parts[3], 10)];
+            return null;
+        }
+
+        function setSlotValue(slotKey, token) {
+            const parts = slotKey.split('_');
+            if (parts[0] === 'q1') {
+                boardState.q1[parts[1]][parseInt(parts[2], 10)] = token;
+            } else if (parts[0] === 'q2') {
+                boardState.q2[parts[1]][parseInt(parts[2], 10)] = token;
+            } else if (parts[0] === 'q3') {
+                boardState.q3.pairs[parseInt(parts[2], 10)][parseInt(parts[3], 10)] = token;
+            }
+        }
+
+        function removeCardFromSlot(event, slotKey) {
+            event.stopPropagation();
+            setSlotValue(slotKey, null);
+            hideFeedbackPanel();
+            playPopSound();
+            renderBoard();
+        }
+
+        /**************************************************************************
+         * 8. XỬ LÝ KÉO THẢ (DRAG & DROP), CLICK & CẢM ỨNG
+         **************************************************************************/
+        let draggedToken = null;
+        let draggedFromSlotKey = null;
+
+        function handleDragStart(event, token) {
+            draggedToken = token;
+            const parentSlot = event.target.closest('.drop-slot');
+            draggedFromSlotKey = parentSlot ? parentSlot.getAttribute('data-slot-key') : null;
+            if (event.dataTransfer) {
+                event.dataTransfer.setData('text/plain', token);
+                event.dataTransfer.effectAllowed = 'copyMove';
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(event, targetSlotKey) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+
+            const token = draggedToken || (event.dataTransfer && event.dataTransfer.getData('text/plain'));
+            if (!token) return;
+
+            placeOrSwapToken(token, draggedFromSlotKey, targetSlotKey);
+            draggedToken = null;
+            draggedFromSlotKey = null;
+        }
+
+        function placeOrSwapToken(token, sourceSlotKey, targetSlotKey) {
+            if (sourceSlotKey && sourceSlotKey !== targetSlotKey) {
+                // Nếu kéo từ ô trả lời này sang ô trả lời khác thì đổi chỗ 2 ô
+                const existingTargetToken = getSlotValue(targetSlotKey);
+                setSlotValue(sourceSlotKey, existingTargetToken);
+                setSlotValue(targetSlotKey, token);
+            } else {
+                // Nếu kéo từ kho bên phải vào ô trả lời: sao chép thẻ vào ô, thẻ ở kho bên phải giữ nguyên
+                setSlotValue(targetSlotKey, token);
+            }
+            selectedCardToken = null;
+            selectedSlotKey = null;
+            hideFeedbackPanel();
+            playPopSound();
+            updateSelectionBanner();
+            renderBoard();
+        }
+
+        function handleCardClick(event, token, inSlot) {
+            if (inSlot) return;
+            event.stopPropagation();
+
+            if (selectedSlotKey) {
+                placeOrSwapToken(token, null, selectedSlotKey);
+                return;
+            }
+
+            selectedCardToken = (selectedCardToken === token) ? null : token;
+            playPopSound();
+            updateSelectionBanner();
+            renderSidebar();
+        }
+
+        function handleSlotClick(event, slotKey) {
+            event.stopPropagation();
+
+            if (selectedCardToken) {
+                placeOrSwapToken(selectedCardToken, null, slotKey);
+                return;
+            }
+
+            if (selectedSlotKey && selectedSlotKey !== slotKey) {
+                const tokenA = getSlotValue(selectedSlotKey);
+                const tokenB = getSlotValue(slotKey);
+                if (tokenA || tokenB) {
+                    setSlotValue(selectedSlotKey, tokenB);
+                    setSlotValue(slotKey, tokenA);
+                    selectedSlotKey = null;
+                    hideFeedbackPanel();
+                    playPopSound();
+                    updateSelectionBanner();
+                    renderBoard();
+                    return;
+                }
+            }
+
+            selectedSlotKey = (selectedSlotKey === slotKey) ? null : slotKey;
+            playPopSound();
+            updateSelectionBanner();
+            renderBoard();
+        }
+
+        function updateSelectionBanner() {
+            const banner = document.getElementById('active-selection-banner');
+            if (selectedCardToken) {
+                const d = getCardDataByToken(selectedCardToken);
+                const label = d.type === 'element' ? `${d.symbol} (${d.name})` : d.html;
+                banner.innerHTML = `
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping"></span>
+                    <span class="text-indigo-700 font-bold">Đang chọn thẻ [${label}] — Bấm vào một ô trống bên dưới để đặt thẻ!</span>
+                `;
+            } else if (selectedSlotKey) {
+                banner.innerHTML = `
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping"></span>
+                    <span class="text-indigo-700 font-bold">Đã chọn ô trống — Bấm vào một thẻ ở kho bên phải để điền vào ô!</span>
+                `;
+            } else {
+                banner.innerHTML = `
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span>Kéo thả thẻ từ bên phải vào ô trống hoặc chạm vào thẻ rồi chạm vào ô cần đặt.</span>
+                `;
+            }
+        }
+
+        // Hỗ trợ kéo thả trên màn hình cảm ứng (Touch)
+        let touchToken = null;
+        let touchSourceSlot = null;
+        let touchMoving = false;
+
+        function handleTouchStart(event, token) {
+            if (event.touches.length !== 1) return;
+            touchToken = token;
+            const parentSlot = event.target.closest('.drop-slot');
+            touchSourceSlot = parentSlot ? parentSlot.getAttribute('data-slot-key') : null;
+            touchMoving = false;
+        }
+
+        document.addEventListener('touchmove', function(event) {
+            if (!touchToken) return;
+            const touch = event.touches[0];
+            const ghost = document.getElementById('touch-drag-ghost');
+
+            if (!touchMoving) {
+                touchMoving = true;
+                ghost.innerHTML = createCardHTML(touchToken, true);
+                ghost.style.display = 'block';
+            }
+
+            ghost.style.left = `${touch.clientX}px`;
+            ghost.style.top = `${touch.clientY}px`;
+
+            document.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('drag-over'));
+            const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            const slotBelow = elemBelow ? elemBelow.closest('.drop-slot') : null;
+            if (slotBelow) slotBelow.classList.add('drag-over');
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(event) {
+            if (!touchToken) return;
+            const ghost = document.getElementById('touch-drag-ghost');
+            ghost.style.display = 'none';
+            document.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('drag-over'));
+
+            if (touchMoving && event.changedTouches.length > 0) {
+                const touch = event.changedTouches[0];
+                const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                const slotBelow = elemBelow ? elemBelow.closest('.drop-slot') : null;
+                if (slotBelow) {
+                    const targetSlotKey = slotBelow.getAttribute('data-slot-key');
+                    placeOrSwapToken(touchToken, touchSourceSlot, targetSlotKey);
+                }
+            }
+            touchToken = null;
+            touchSourceSlot = null;
+            touchMoving = false;
+        });
+
+        /**************************************************************************
+         * 9. CHUYỂN ĐỔI CÂU HỎI (TỰ ĐỘNG XÁO TRỘN NGẪU NHIÊN KHO THẺ)
+         **************************************************************************/
+        function switchQuestion(qNum) {
+            currentQuestion = qNum;
+            selectedCardToken = null;
+            selectedSlotKey = null;
+            hideFeedbackPanel();
+
+            // Xáo trộn lại các thẻ mỗi khi chuyển câu hỏi
+            shuffleAllCards(false);
+
+            [1, 2, 3].forEach(n => {
+                const tab = document.getElementById(`tab-q${n}`);
+                if (n === qNum) {
+                    tab.className = 'q-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm';
+                } else {
+                    tab.className = 'q-tab px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 text-slate-600 hover:bg-white/70';
+                }
+            });
+
+            document.getElementById('board-q1').className = qNum === 1 ? 'flex flex-col gap-6' : 'hidden';
+            document.getElementById('board-q2').className = qNum === 2 ? 'block' : 'hidden';
+            document.getElementById('board-q3').className = qNum === 3 ? 'flex flex-col gap-4' : 'hidden';
+
+            const badgeTitle = document.getElementById('question-badge-title');
+            const titleEl = document.getElementById('question-title');
+
+            if (qNum === 1) {
+                badgeTitle.innerHTML = '<i class="fa-solid fa-bolt text-indigo-500"></i> CÂU HỎI 1 / 3';
+                titleEl.textContent = 'Câu 1: Sắp xếp các nguyên tử trong cùng một chu kỳ theo chiều tăng dần của bán kính nguyên tử.';
+                setSidebarFilter('elements');
+            } else if (qNum === 2) {
+                badgeTitle.innerHTML = '<i class="fa-solid fa-bolt text-indigo-500"></i> CÂU HỎI 2 / 3';
+                titleEl.textContent = 'Câu 2: Sắp xếp các nguyên tử trong cùng một nhóm theo chiều giảm dần của độ âm điện.';
+                setSidebarFilter('elements');
+            } else if (qNum === 3) {
+                badgeTitle.innerHTML = '<i class="fa-solid fa-bolt text-indigo-500"></i> CÂU HỎI 3 / 3';
+                titleEl.textContent = 'Câu 3: Sắp xếp các hợp chất Hydroxide của các nguyên tố trong chu kỳ IIA và IIIA theo chiều giảm dần của tính base và tăng dần của tính acid.';
+                setSidebarFilter('all');
+            }
+
+            updateSelectionBanner();
+            renderBoard();
+        }
+
+        /**************************************************************************
+         * 10. KIỂM TRA ĐÁP ÁN, PHÂN TÍCH LỖI SAI & GIẢI THÍCH LÝ THUYẾT
+         **************************************************************************/
+        function checkCurrentQuestion() {
+            if (currentQuestion === 1) evaluateQuestion1();
+            else if (currentQuestion === 2) evaluateQuestion2();
+            else if (currentQuestion === 3) evaluateQuestion3();
+        }
+
+        // CHẤM CÂU 1
+        function evaluateQuestion1() {
+            const expectedP2 = ['EL_F', 'EL_O', 'EL_N', 'EL_C', 'EL_B', 'EL_Be', 'EL_Li'];
+            const expectedP3 = ['EL_Cl', 'EL_S', 'EL_P', 'EL_Si', 'EL_Al', 'EL_Mg', 'EL_Na'];
+
+            const r1 = boardState.q1.row1;
+            const r2 = boardState.q1.row2;
+
+            const matchDirect = countMatches(r1, expectedP2) + countMatches(r2, expectedP3);
+            const matchSwapped = countMatches(r1, expectedP3) + countMatches(r2, expectedP2);
+
+            const targetRow1 = matchSwapped > matchDirect ? expectedP3 : expectedP2;
+            const targetRow2 = matchSwapped > matchDirect ? expectedP2 : expectedP3;
+            const row1PeriodNum = matchSwapped > matchDirect ? 3 : 2;
+            const row2PeriodNum = matchSwapped > matchDirect ? 2 : 3;
+
+            let allCorrect = true;
+            const errors = [];
+
+            r1.forEach((token, idx) => {
+                const slotEl = document.getElementById(`slot-q1_row1_${idx}`);
+                const expectedToken = targetRow1[idx];
+                if (token === expectedToken) {
+                    markSlotStatus(slotEl, true);
+                } else {
+                    allCorrect = false;
+                    markSlotStatus(slotEl, false);
+                    errors.push(analyzeQ1SlotError(token, expectedToken, 1, idx + 1, row1PeriodNum));
+                }
+            });
+
+            r2.forEach((token, idx) => {
+                const slotEl = document.getElementById(`slot-q1_row2_${idx}`);
+                const expectedToken = targetRow2[idx];
+                if (token === expectedToken) {
+                    markSlotStatus(slotEl, true);
+                } else {
+                    allCorrect = false;
+                    markSlotStatus(slotEl, false);
+                    errors.push(analyzeQ1SlotError(token, expectedToken, 2, idx + 1, row2PeriodNum));
+                }
+            });
+
+            const scientificExplanation = `
+                <div class="space-y-3 text-xs sm:text-sm text-slate-700">
+                    <p>
+                        <strong>Quy luật biến đổi bán kính nguyên tử trong một chu kỳ:</strong>
+                        Các nguyên tố trong cùng một chu kỳ có cùng số lớp electron. Khi đi từ trái sang phải (điện tích hạt nhân <span class="font-mono font-bold">Z</span> tăng), lực hút giữa hạt nhân và các electron lớp ngoài cùng tăng lên làm <strong>bán kính nguyên tử giảm dần</strong>.
+                    </p>
+                    <p>
+                        Vì vậy, chiều <strong>tăng dần bán kính nguyên tử (nhỏ &lt; lớn)</strong> trong một chu kỳ sẽ đi từ <strong>Nhóm VIIA về Nhóm IA</strong>:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200">
+                            <div class="font-extrabold text-rose-800 mb-1">Chu kỳ 2:</div>
+                            <div class="font-mono font-bold text-rose-900 text-sm">F &lt; O &lt; N &lt; C &lt; B &lt; Be &lt; Li</div>
+                            <div class="text-[11px] text-rose-700 mt-1">Bán kính (pm): F (42) &lt; O (48) &lt; N (56) &lt; C (67) &lt; B (87) &lt; Be (112) &lt; Li (167)</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200">
+                            <div class="font-extrabold text-blue-800 mb-1">Chu kỳ 3:</div>
+                            <div class="font-mono font-bold text-blue-900 text-sm">Cl &lt; S &lt; P &lt; Si &lt; Al &lt; Mg &lt; Na</div>
+                            <div class="text-[11px] text-blue-700 mt-1">Bán kính (pm): Cl (79) &lt; S (88) &lt; P (98) &lt; Si (111) &lt; Al (118) &lt; Mg (145) &lt; Na (190)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allCorrect) {
+                document.getElementById('badge-q1').classList.remove('hidden');
+                playCelebrationSound();
+                launchConfetti();
+                renderFeedbackPanel(true, 'Chúc mừng! Bạn đã hoàn thành xuất sắc Câu 1!', [], scientificExplanation);
+            } else {
+                playWrongSound();
+                renderFeedbackPanel(false, 'Chưa chính xác hoàn toàn! Hãy xem phân tích lỗi sai chi tiết bên dưới:', errors, scientificExplanation);
+            }
+        }
+
+        function analyzeQ1SlotError(actualToken, expectedToken, rowNum, posNum, expectedPeriod) {
+            const expectedData = getCardDataByToken(expectedToken);
+            if (!actualToken) {
+                return `<strong>Hàng ${rowNum} - Ô ${posNum}:</strong> Chưa điền thẻ. Đáp án đúng ở vị trí này là <strong>${expectedData.symbol} (${expectedData.name})</strong> thuộc Chu kỳ ${expectedPeriod}.`;
+            }
+            const actualData = getCardDataByToken(actualToken);
+            if (actualData.type !== 'element') {
+                return `<strong>Hàng ${rowNum} - Ô ${posNum}:</strong> Bạn đã đặt thẻ nhóm nguyên tử <strong>${actualData.html}</strong>. Câu 1 chỉ sử dụng thẻ nguyên tố.`;
+            }
+            if (actualData.group === 'VIIIA') {
+                return `<strong>Hàng ${rowNum} - Ô ${posNum} (${actualData.symbol}):</strong> Khí hiếm (${actualData.symbol}) không xét trong dãy quy luật này. Vị trí này cần <strong>${expectedData.symbol}</strong>.`;
+            }
+            if (actualData.period !== expectedPeriod) {
+                return `<strong>Hàng ${rowNum} - Ô ${posNum} (${actualData.symbol}):</strong> Nhầm chu kỳ! <strong>${actualData.symbol} (Z=${actualData.z})</strong> thuộc Chu kỳ ${actualData.period}, trong khi Hàng ${rowNum} đang xếp Chu kỳ ${expectedPeriod}. Cần điền <strong>${expectedData.symbol}</strong>.`;
+            }
+
+            const reversedP2 = ['EL_Li', 'EL_Be', 'EL_B', 'EL_C', 'EL_N', 'EL_O', 'EL_F'];
+            const reversedP3 = ['EL_Na', 'EL_Mg', 'EL_Al', 'EL_Si', 'EL_P', 'EL_S', 'EL_Cl'];
+            const reversedTarget = expectedPeriod === 2 ? reversedP2 : reversedP3;
+
+            if (actualToken === reversedTarget[posNum - 1]) {
+                return `<strong>Hàng ${rowNum} - Ô ${posNum} (${actualData.symbol}):</strong> Bạn đang xếp ngược chiều (giảm dần bán kính). Đề bài yêu cầu chiều <strong>tăng dần bán kính</strong> nên nguyên tố bán kính nhỏ hơn là <strong>${expectedData.symbol} (${expectedData.radius} pm)</strong> phải ở vị trí này.`;
+            }
+
+            return `<strong>Hàng ${rowNum} - Ô ${posNum} (${actualData.symbol}):</strong> Sai thứ tự bán kính. <strong>${actualData.symbol}</strong> có bán kính ${actualData.radius} pm, còn vị trí số ${posNum} của Chu kỳ ${expectedPeriod} phải là <strong>${expectedData.symbol} (${expectedData.radius} pm)</strong>.`;
+        }
+
+        // CHẤM CÂU 2
+        function evaluateQuestion2() {
+            const col1Input = boardState.q2.col1;
+            const col2Input = boardState.q2.col2;
+            const col3Input = boardState.q2.col3;
+
+            // Cột IA thông minh: chấp nhận cả 4 nguyên tố (H > Li > Na > K) hoặc 3 nguyên tố kim loại kiềm (Li > Na > K ở 3 ô đầu)
+            let expectedCol1 = ['EL_H', 'EL_Li', 'EL_Na', 'EL_K'];
+            const is3AlkaliTop = (col1Input[0] === 'EL_Li' && col1Input[1] === 'EL_Na' && col1Input[2] === 'EL_K' && !col1Input[3]);
+            if (is3AlkaliTop) {
+                expectedCol1 = ['EL_Li', 'EL_Na', 'EL_K', null];
+            }
+
+            const expectedCol2 = ['EL_Be', 'EL_Mg', 'EL_Ca'];
+            const expectedCol3 = ['EL_F', 'EL_Cl'];
+
+            let allCorrect = true;
+            const errors = [];
+
+            col1Input.forEach((token, idx) => {
+                const slotEl = document.getElementById(`slot-q2_col1_${idx}`);
+                const exp = expectedCol1[idx];
+                if (exp === null && token === null) {
+                    slotEl.classList.remove('slot-correct', 'slot-wrong');
+                    const oldBadge = slotEl.querySelector('.status-badge');
+                    if (oldBadge) oldBadge.remove();
+                    return;
+                }
+                if (token === exp) {
+                    markSlotStatus(slotEl, true);
+                } else {
+                    allCorrect = false;
+                    markSlotStatus(slotEl, false);
+                    errors.push(analyzeQ2SlotError(token, exp, 'Nhóm IA', idx + 1));
+                }
+            });
+
+            col2Input.forEach((token, idx) => {
+                const slotEl = document.getElementById(`slot-q2_col2_${idx}`);
+                const exp = expectedCol2[idx];
+                if (token === exp) {
+                    markSlotStatus(slotEl, true);
+                } else {
+                    allCorrect = false;
+                    markSlotStatus(slotEl, false);
+                    errors.push(analyzeQ2SlotError(token, exp, 'Nhóm IIA', idx + 1));
+                }
+            });
+
+            col3Input.forEach((token, idx) => {
+                const slotEl = document.getElementById(`slot-q2_col3_${idx}`);
+                const exp = expectedCol3[idx];
+                if (token === exp) {
+                    markSlotStatus(slotEl, true);
+                } else {
+                    allCorrect = false;
+                    markSlotStatus(slotEl, false);
+                    errors.push(analyzeQ2SlotError(token, exp, 'Nhóm VIIA', idx + 1));
+                }
+            });
+
+            const scientificExplanation = `
+                <div class="space-y-3 text-xs sm:text-sm text-slate-700">
+                    <p>
+                        <strong>Quy luật biến đổi độ âm điện trong một nhóm A:</strong>
+                        Trong cùng một nhóm A, khi đi từ trên xuống dưới theo chiều tăng của điện tích hạt nhân, bán kính nguyên tử tăng lên làm lực hút của hạt nhân đối với cặp electron dùng chung giảm xuống, do đó <strong>độ âm điện giảm dần</strong>.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                        <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200">
+                            <div class="font-extrabold text-rose-800 mb-1">Nhóm IA:</div>
+                            <div class="font-mono font-bold text-rose-900">H &gt; Li &gt; Na &gt; K</div>
+                            <div class="text-[11px] text-rose-700 mt-1">Độ âm điện: H (2,20) &gt; Li (0,98) &gt; Na (0,93) &gt; K (0,82)</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
+                            <div class="font-extrabold text-emerald-800 mb-1">Nhóm IIA:</div>
+                            <div class="font-mono font-bold text-emerald-900">Be &gt; Mg &gt; Ca</div>
+                            <div class="text-[11px] text-emerald-700 mt-1">Độ âm điện: Be (1,57) &gt; Mg (1,31) &gt; Ca (1,00)</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-purple-50 border border-purple-200">
+                            <div class="font-extrabold text-purple-800 mb-1">Nhóm VIIA:</div>
+                            <div class="font-mono font-bold text-purple-900">F &gt; Cl</div>
+                            <div class="text-[11px] text-purple-700 mt-1">Độ âm điện: F (3,98) &gt; Cl (3,16)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allCorrect) {
+                document.getElementById('badge-q2').classList.remove('hidden');
+                playCelebrationSound();
+                launchConfetti();
+                renderFeedbackPanel(true, 'Chúc mừng! Bạn đã sắp xếp chính xác độ âm điện của các nhóm ở Câu 2!', [], scientificExplanation);
+            } else {
+                playWrongSound();
+                renderFeedbackPanel(false, 'Một số vị trí ở Câu 2 chưa chính xác. Xem phân tích lỗi sai bên dưới:', errors, scientificExplanation);
+            }
+        }
+
+        function analyzeQ2SlotError(actualToken, expectedToken, groupName, posNum) {
+            const expectedData = getCardDataByToken(expectedToken);
+            if (!actualToken) {
+                return `<strong>Cột ${groupName} - Ô ${posNum}:</strong> Chưa điền thẻ. Cần điền nguyên tố <strong>${expectedData.symbol} (Độ âm điện = ${expectedData.en})</strong>.`;
+            }
+            const actualData = getCardDataByToken(actualToken);
+            if (actualData.type !== 'element') {
+                return `<strong>Cột ${groupName} - Ô ${posNum}:</strong> Bạn đã đặt thẻ nhóm nguyên tử <strong>${actualData.html}</strong>. Câu 2 chỉ sử dụng thẻ nguyên tố.`;
+            }
+            const expectedGroupCode = groupName.replace('Nhóm ', '');
+            if (actualData.group !== expectedGroupCode) {
+                return `<strong>Cột ${groupName} - Ô ${posNum} (${actualData.symbol}):</strong> Nhầm nhóm! <strong>${actualData.symbol} (Z=${actualData.z})</strong> thuộc Nhóm ${actualData.group}, không thuộc ${groupName}.`;
+            }
+            return `<strong>Cột ${groupName} - Ô ${posNum} (${actualData.symbol}):</strong> Sai thứ tự độ âm điện. <strong>${actualData.symbol}</strong> có độ âm điện ${actualData.en}, trong khi vị trí Ô ${posNum} cần <strong>${expectedData.symbol} (${expectedData.en})</strong>.`;
+        }
+
+        // CHẤM CÂU 3 (7 HỢP CHẤT)
+        function evaluateQuestion3() {
+            let allCorrect = true;
+            const errors = [];
+
+            Q3_TARGETS.forEach((target, idx) => {
+                const leftToken = boardState.q3.pairs[idx][0];
+                const rightToken = boardState.q3.pairs[idx][1];
+
+                const leftSlotEl = document.getElementById(`slot-q3_pair_${idx}_0`);
+                const rightSlotEl = document.getElementById(`slot-q3_pair_${idx}_1`);
+
+                const isLeftOk = target.left.includes(leftToken);
+                const isRightOk = target.right.includes(rightToken);
+
+                markSlotStatus(leftSlotEl, isLeftOk);
+                markSlotStatus(rightSlotEl, isRightOk);
+
+                if (!isLeftOk || !isRightOk) {
+                    allCorrect = false;
+                    errors.push(analyzeQ3PairError(leftToken, rightToken, target, idx + 1));
+                }
+            });
+
+            const scientificExplanation = `
+                <div class="space-y-3 text-xs sm:text-sm text-slate-700">
+                    <p>
+                        <strong>Quy luật biến đổi tính base và tính acid của các Hydroxide trong Chu kỳ 3:</strong>
+                        Trong một chu kỳ, theo chiều tăng của điện tích hạt nhân từ trái sang phải (từ Na đến Cl), tính kim loại giảm dần và tính phi kim tăng dần. Do đó, các hợp chất Hydroxide (bao gồm các oxoacid tương ứng của phi kim ở hóa trị cao nhất) có <strong>tính base giảm dần và tính acid tăng dần</strong>:
+                    </p>
+                    <div class="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200">
+                        <div class="font-extrabold text-indigo-900 mb-2">Dãy sắp xếp chuẩn 7 hợp chất:</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            ${Q3_TARGETS.map((t, i) => `
+                                <div class="px-3 py-1.5 rounded-xl bg-white border border-indigo-200 shadow-sm flex flex-col items-center">
+                                    <span class="font-extrabold text-indigo-700 text-sm">${t.formula}</span>
+                                    <span class="text-[10px] text-slate-500 font-semibold">${t.type}</span>
+                                </div>
+                                ${i < Q3_TARGETS.length - 1 ? '<span class="font-extrabold text-indigo-600 text-base">&gt;</span>' : ''}
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (allCorrect) {
+                document.getElementById('badge-q3').classList.remove('hidden');
+                playCelebrationSound();
+                launchConfetti();
+                renderFeedbackPanel(true, 'Tuyệt vời! Bạn đã ghép và sắp xếp chính xác cả 7 hợp chất ở Câu 3!', [], scientificExplanation);
+            } else {
+                playWrongSound();
+                renderFeedbackPanel(false, 'Một số hợp chất hoặc thứ tự sắp xếp ở Câu 3 chưa đúng. Xem phân tích chi tiết:', errors, scientificExplanation);
+            }
+        }
+
+        function analyzeQ3PairError(leftToken, rightToken, target, pairNum) {
+            const expectedLeft = getCardDataByToken(target.left[0]);
+            const expectedRight = getCardDataByToken(target.right[0]);
+            const expectedLeftLabel = expectedLeft.type === 'element' ? expectedLeft.symbol : expectedLeft.html;
+            const expectedRightLabel = expectedRight.type === 'element' ? expectedRight.symbol : expectedRight.html;
+
+            if (!leftToken && !rightToken) {
+                return `<strong>Hợp chất ${pairNum}:</strong> Đang để trống. Vị trí số ${pairNum} cần ghép <strong>[${expectedLeftLabel}] + [${expectedRightLabel}]</strong> tạo thành <strong>${target.formula} (${target.type})</strong>.`;
+            }
+
+            const actualFormula = buildCompoundPreview(leftToken, rightToken);
+
+            if (leftToken === 'EL_Na' && rightToken && rightToken !== 'G_OH') {
+                return `<strong>Hợp chất ${pairNum} (${actualFormula}):</strong> Sai hóa trị! Sodium (Na) hóa trị I nên phải ghép với <strong>[OH]</strong> tạo thành <strong>NaOH</strong>.`;
+            }
+            if (leftToken === 'EL_Mg' && rightToken && rightToken !== 'G_OH2') {
+                return `<strong>Hợp chất ${pairNum} (${actualFormula}):</strong> Sai hóa trị! Magnesium (Mg) hóa trị II nên phải ghép với <strong>[(OH)<sub>2</sub>]</strong> tạo thành <strong>Mg(OH)<sub>2</sub></strong>.`;
+            }
+            if (leftToken === 'EL_Al' && rightToken && rightToken !== 'G_OH3') {
+                return `<strong>Hợp chất ${pairNum} (${actualFormula}):</strong> Sai hóa trị! Aluminium (Al) hóa trị III nên phải ghép với <strong>[(OH)<sub>3</sub>]</strong> tạo thành <strong>Al(OH)<sub>3</sub></strong>.`;
+            }
+
+            return `<strong>Hợp chất ${pairNum} (Đang ghép: ${actualFormula}):</strong> Chưa đúng với vị trí số ${pairNum}. Vị trí này cần hợp chất <strong>${target.formula} (${target.type})</strong> gồm 2 thẻ <strong>[${expectedLeftLabel}]</strong> và <strong>[${expectedRightLabel}]</strong>.`;
+        }
+
+        function countMatches(arr1, arr2) {
+            let c = 0;
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] && arr1[i] === arr2[i]) c++;
+            }
+            return c;
+        }
+
+        function markSlotStatus(slotEl, isCorrect) {
+            if (!slotEl) return;
+            slotEl.classList.remove('slot-correct', 'slot-wrong');
+            const oldBadge = slotEl.querySelector('.status-badge');
+            if (oldBadge) oldBadge.remove();
+
+            slotEl.classList.add(isCorrect ? 'slot-correct' : 'slot-wrong');
+            const badge = document.createElement('div');
+            badge.className = `status-badge ${isCorrect ? 'bg-emerald-600' : 'bg-rose-600'}`;
+            badge.innerHTML = isCorrect ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-exclamation"></i>';
+            slotEl.appendChild(badge);
+        }
+
+        function renderFeedbackPanel(isSuccess, heading, errorsList, explanationHTML) {
+            const panel = document.getElementById('feedback-panel');
+            panel.classList.remove('hidden');
+
+            if (isSuccess) {
+                panel.className = 'rounded-3xl border-2 border-emerald-400 bg-emerald-50/80 p-5 sm:p-6 shadow-md space-y-4';
+                panel.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-sm shrink-0">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-extrabold text-emerald-950">${heading}</h3>
+                            <p class="text-xs sm:text-sm text-emerald-800">Tất cả các ô trả lời đều chính xác 100%.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-200">
+                        <h4 class="text-sm font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-emerald-600"></i>
+                            <span>GIẢI THÍCH KẾT QUẢ</span>
+                        </h4>
+                        ${explanationHTML}
+                    </div>
+                `;
+            } else {
+                panel.className = 'rounded-3xl border-2 border-rose-300 bg-rose-50/80 p-5 sm:p-6 shadow-md space-y-4';
+                panel.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-sm shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-extrabold text-rose-950">${heading}</h3>
+                            <p class="text-xs sm:text-sm text-rose-800">Các ô viền xanh đã đúng, hãy điều chỉnh lại các ô viền đỏ:</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-rose-200">
+                        <h4 class="text-sm font-extrabold text-rose-900 mb-2.5 flex items-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass-chart text-rose-600"></i>
+                            <span>PHÂN TÍCH LỖI SAI (${errorsList.length} vị trí):</span>
+                        </h4>
+                        <ul class="space-y-2 text-xs sm:text-sm text-slate-700 list-disc pl-5">
+                            ${errorsList.map(err => `<li>${err}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200">
+                        <h4 class="text-sm font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-indigo-600"></i>
+                            <span>GIẢI THÍCH LÝ THUYẾT & ĐÁP ÁN CHUẨN</span>
+                        </h4>
+                        ${explanationHTML}
+                    </div>
+                `;
+            }
+
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideFeedbackPanel() {
+            document.getElementById('feedback-panel').classList.add('hidden');
+        }
+
+        function resetCurrentQuestion() {
+            selectedCardToken = null;
+            selectedSlotKey = null;
+            hideFeedbackPanel();
+
+            if (currentQuestion === 1) {
+                boardState.q1.row1 = Array(7).fill(null);
+                boardState.q1.row2 = Array(7).fill(null);
+            } else if (currentQuestion === 2) {
+                boardState.q2.col1 = Array(4).fill(null);
+                boardState.q2.col2 = Array(3).fill(null);
+                boardState.q2.col3 = Array(2).fill(null);
+            } else if (currentQuestion === 3) {
+                boardState.q3.pairs = Array.from({ length: 7 }, () => [null, null]);
+            }
+            shuffleAllCards(true);
+            renderBoard();
+        }
+
+        // Khởi chạy ứng dụng khi tải trang
+        window.onload = function() {
+            shuffleAllCards(false);
+            switchQuestion(1);
+        };
+    </script>
+</body>
+</html>
